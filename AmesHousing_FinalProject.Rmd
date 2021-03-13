@@ -44,9 +44,6 @@ AmesHousing <- read.csv("AmesHousing.csv")
 
 ```
 
-```{r}
-colnames(AmesHousing)
-```
 
 ```{r Changing column names, message=FALSE, warning=FALSE, echo = FALSE}
 #changing column names
@@ -433,7 +430,9 @@ testing <- AmesHousing%>%
 
 # Discussion
 
+
 # References
+
 
 ```{r Remove Small N categories, message=FALSE, warning=FALSE, echo = FALSE}
 AmesHousing <- AmesHousing %>% 
