@@ -44,6 +44,9 @@ AmesHousing <- read.csv("AmesHousing.csv")
 
 ```
 
+```{r}
+colnames(AmesHousing)
+```
 
 ```{r Changing column names, message=FALSE, warning=FALSE, echo = FALSE}
 #changing column names
@@ -58,31 +61,42 @@ colnames(AmesHousing)[82] <- c("saleprice")
 ```
 
 ```{r, echo = FALSE}
-#All of the features are in character format, so need to convert to factors
-AmesHousing$"Garage Qual" <- as.factor(AmesHousing$"Garage Qual")
-AmesHousing$"Exterior 1st" <- as.factor(AmesHousing$"Exterior 1st")
-AmesHousing$"Foundation" <- as.factor(AmesHousing$"Foundation")
-AmesHousing$"Bsmt Qual" <- as.factor(AmesHousing$"Garage Qual")
-AmesHousing$"Heating QC" <- as.factor(AmesHousing$"Heating QC")
-AmesHousing$"Central Air" <- as.factor(AmesHousing$"Central Air")
-AmesHousing$"Roof Style" <- as.factor(AmesHousing$"Roof Style")
+#Exploratory Analysis (Shannon's Variables)
 
-#Recode
-AmesHousing$"Garage Qual" <- factor(AmesHousing$"Garage Qual", levels = c("Fa", "TA", "Gd"))
-AmesHousing$"Bsmt Qual" <- factor(AmesHousing$"Bsmt Qual", levels = c("Fa", "TA", "Gd"))
-AmesHousing$"Heating QC" <- factor(AmesHousing$"Heating QC", levels = c('Fa', 'TA', 'Gd', 'Ex'))
+#Remove levels with less than 10 observations
+AmesHousing <- AmesHousing[!(AmesHousing$"Garage Qual" =="Ex" | AmesHousing$"Garage Qual" == "Po"),]
+AmesHousing <- AmesHousing[!(AmesHousing$"Exterior 1st" =="AsphShn" | AmesHousing$"Exterior 1st" == "BrkComm"| AmesHousing$"Exterior 1st" == "CBlock"| AmesHousing$"Exterior 1st" == "ImStucc"| AmesHousing$"Exterior 1st" == "PreCast"| AmesHousing$"Exterior 1st" == "Stone"),]
+AmesHousing <- AmesHousing[!(AmesHousing$"Foundation" =="Wood"),]
+AmesHousing <- AmesHousing[!(AmesHousing$"Bsmt Qual" =="Ex" | AmesHousing$"Bsmt Qual" == "Po"),]
+AmesHousing <- AmesHousing[!(AmesHousing$"Heating QC" =="Po"),]
+AmesHousing <- AmesHousing[!(AmesHousing$"Roof Style" =="Shed"),]
+AmesHousing <- AmesHousing[!(AmesHousing$"Foundation" == "Stone"),]
+AmesHousing <- AmesHousing[!(AmesHousing$"Roof Style" == "Mansard"),]
+
+#All of the features are in character format, so need to convert to factors
+AmesHousing$Garage.Qual <- as.factor(AmesHousing$Garage.Qual)
+AmesHousing$Exterior.1st <- as.factor(AmesHousing$Exterior.1st)
+AmesHousing$Foundation <- as.factor(AmesHousing$Foundation)
+AmesHousing$Bsmt.Qual <- as.factor(AmesHousing$Garage.Qual)
+AmesHousing$Heating.QC <- as.factor(AmesHousing$Heating.QC)
+AmesHousing$Roof.Style <- as.factor(AmesHousing$Roof.Style)
+
+#Re-code
+AmesHousing$Garage.Qual <- factor(AmesHousing$Garage.Qual, levels = c("Fa", "TA", "Gd"))
+AmesHousing$`Bsmt.Qual` <- factor(AmesHousing$`Bsmt.Qual`, levels = c("Fa", "TA", "Gd"))
+AmesHousing$`Heating.QC` <- factor(AmesHousing$`Heating.QC`, levels = c('Fa', 'TA', 'Gd', 'Ex'))
 
 #Rename
-levels(AmesHousing$"Garage Qual") <- c("1", "2", "3")
-levels(AmesHousing$"Bsmt Qual") <- c("1", "2", "3")
-levels(AmesHousing$"Heating QC") <- c("1", "2", "3", "4")
-levels(AmesHousing$"Exterior 1st") <- c("Asbestos Shingles", "Brick Face", "Cement Board", "Hard Board","Metal Siding","Plywood","Stucco","Vinyl Siding","Wood Siding","Wood Shingles")
+levels(AmesHousing$Garage.Qual) <- c("1", "2", "3")
+levels(AmesHousing$Bsmt.Qual) <- c("1", "2", "3")
+levels(AmesHousing$Heating.QC) <- c("1", "2", "3", "4")
+levels(AmesHousing$Exterior.1st) <- c("Asbestos Shingles", "Brick Face", "Cement Board", "Hard Board","Metal Siding","Plywood","Stucco","Vinyl Siding","Wood Siding","Wood Shingles")
 levels(AmesHousing$"Foundation") <- c("Brick & Tile", "Cinder Block", "Poured Concrete")
 
 #Convert to Double
-AmesHousing$"Garage Qual" <- as.numeric(as.character(AmesHousing$"Garage Qual"))
-AmesHousing$"Bsmt Qual" <- as.numeric(as.character(AmesHousing$"Bsmt Qual"))
-AmesHousing$"Heating QC" <- as.numeric(as.character(AmesHousing$"Heating QC"))
+AmesHousing$Garage.Qual <- as.numeric(as.character(AmesHousing$Garage.Qual))
+AmesHousing$Bsmt.Qual <- as.numeric(as.character(AmesHousing$Bsmt.Qual))
+AmesHousing$Heating.QC <- as.numeric(as.character(AmesHousing$Heating.QC))
 ```
 
 ```{r Recoding Variables, message=FALSE, warning=FALSE, echo = FALSE}
@@ -382,6 +396,7 @@ plot_grid(graph9, graph10)
 ```
 
 
+
 **Neighborhood** We can observe a large variation in sale price across across different neighborhoods. Even within neighborhood we also see variation. Investigating some housing characteristics may give us insight into the variation observed in price within neighborhoods. 
 
 
@@ -397,7 +412,11 @@ When looking at home type by sale price, we find that 2 story homes built in the
 There was only one house that had a rating of for kitchen quality, thus this observation was removed from the data. We see a non-linear relationship between kitchen quality and sale price. The higher the kitchen quality the higher the median sale price. From **Figure 10**, we can see that - as expected - there is a gradual positive relationship between lot area and sales price.
 
 
+## Hypothesis
 
+
+
+# Methodology
 
 ```{r Splitting into test/train , message=FALSE, warning=FALSE, echo=FALSE}
 
@@ -409,23 +428,18 @@ testing <- AmesHousing%>%
 ```
 
 
+# Analysis
+
+
+# Discussion
+
+# References
+
 ```{r Remove Small N categories, message=FALSE, warning=FALSE, echo = FALSE}
 AmesHousing <- AmesHousing %>% 
   filter(home_type != "1-STORY W/FINISHED ATTIC ALL AGES" & home_type != "1-1/2 STORY PUD - ALL AGES")%>%
   filter(!Neighborhood%in%c("GrnHill", "Landmrk", "Greens"))%>%
   filter(Kitchen.Qual!=1)
-
-AmesHousing <- AmesHousing[!(AmesHousing$"Garage Qual" =="Ex" | AmesHousing$"Garage Qual" == "Po"),]
-
-AmesHousing <- AmesHousing[!(AmesHousing$"Exterior 1st" =="AsphShn" | AmesHousing$"Exterior 1st" == "BrkComm"| AmesHousing$"Exterior 1st" == "CBlock"| AmesHousing$"Exterior 1st" == "ImStucc"| AmesHousing$"Exterior 1st" == "PreCast"| AmesHousing$"Exterior 1st" == "Stone"),]
-
-AmesHousing <- AmesHousing[!(AmesHousing$"Foundation" =="Wood"),]
-
-AmesHousing <- AmesHousing[!(AmesHousing$"Bsmt Qual" =="Ex" | AmesHousing$"Bsmt Qual" == "Po"),]
-
-AmesHousing <- AmesHousing[!(AmesHousing$"Heating QC" =="Po"),]
-
-AmesHousing <- AmesHousing[!(AmesHousing$"Roof Style" =="Shed"),]
 
 ```
 
