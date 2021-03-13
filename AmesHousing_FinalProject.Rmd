@@ -42,6 +42,8 @@ options(scipen=10000)
 ```{r loading data, message=TRUE, warning=FALSE, echo = FALSE}
 AmesHousing <- read.csv("AmesHousing.csv")
 
+print(hello)
+
 ```
 
 
