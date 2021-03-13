@@ -2,28 +2,19 @@
 title: "Ames Housing Final Project"
 date: "Last updated on `r Sys.Date()`"
 author: "Group E"
-output:
+output: 
   html_document:
-    df_print: kable
-    highlight: tango
-    number_sections: yes
-    theme: cosmo
-    toc: yes
-    toc_depth: 2
-    toc_float:
-      collapsed: yes
+    fig_width: 8
+    fig_height: 6
 ---
 
-The aim of this project....
-
-This project used data from 1500 residential property sales in Ames, Iowa between 2006 and 2012. There are 82 explanatory variables in the data set, containing -  nominal, ordinal, discrete, and continuous attributes.  Continuous variables provide information about the multiple area dimensions of the house and property, such as the the size of the lot, garage among others. Discrete variables, on the other hand, quantify characteristics of the house/properties like the number of kitchens, baths, bedrooms, and parking spots. Nominal variables, generally, describe the multiple types of materials and locations, such name of the neighborhood or the type of foundations. Ordinal variables typically rate the condition and quality of multiple house characteristics  and utilities. 
 
 
 
-# EDA
+```{r Loading Packages, echo=FALSE, message=FALSE, warning=FALSE}
 
 
-```{r, warning=FALSE, message = FALSE, echo=FALSE}
+
 library(ggplot2)
 library(tidyr)
 library(dplyr)
@@ -41,288 +32,364 @@ library(knitr)
 library(boot)
 library(gam)
 library(GGally) 
+library(plotly)
+library(tidyverse)
+library(scales)
+
+options(scipen=10000)
 ```
 
-```{r,echo=FALSE}
+```{r loading data, message=TRUE, warning=FALSE, echo = FALSE}
 AmesHousing <- read.csv("AmesHousing.csv")
-```
-
-
-How much is missing in the raw data?
-
-There is no missing data relating to the 5 categorical variables. NAs in the Fence variable indicate No Fence.Consequently, recoded `NA`s as `No Fence`
-```{r, echo=FALSE}
-
-
-# 
-# table(is.na(AmesHousing$Fence))
-# #2358
-# 
-# table(is.na(AmesHousing$Street))
-# table(is.na(AmesHousing$Land.Slope))
-# table(is.na(AmesHousing$Utilities))
-# table(is.na(AmesHousing$Neighborhood))
-# table(is.na(AmesHousing$Kitchen.Qual))
-# table(is.na(AmesHousing$SalePrice))
 
 ```
 
 
+```{r Changing column names, message=FALSE, warning=FALSE, echo = FALSE}
+#changing column names
+colnames(AmesHousing)[3] <- c("home_type")
+colnames(AmesHousing)[6] <- c("lot_area")
+colnames(AmesHousing)[19] <- c("overall_qual")
+colnames(AmesHousing)[21] <- c("year_built")
+colnames(AmesHousing)[51] <- c("full_bath_abv_grd")
+colnames(AmesHousing)[56] <- c("tot_rms_abv_grd")
+colnames(AmesHousing)[82] <- c("saleprice")
 
-```{r, echo=FALSE}
+
+```
+
+
+```{r Recoding Variables, message=FALSE, warning=FALSE, echo = FALSE}
+
+
+AmesHousing$home_type <- recode(AmesHousing$home_type, 
+       `020` = "1-STORY 1946 & NEWER ALL STYLES", 
+       `030` = "1-STORY 1945 & OLDER", 
+       `040` = "1-STORY W/FINISHED ATTIC ALL AGES", 
+       `045` = "1-1/2 STORY - UNFINISHED ALL AGES", 
+       `050` = "1-1/2 STORY FINISHED ALL AGES", 
+       `060` = "2-STORY 1946 & NEWER", 
+       `070` = "2-STORY 1945 & OLDER",
+       `075` = "2-1/2 STORY ALL AGES",
+       `080` = "SPLIT OR MULTI-LEVEL", 
+       `085` = "SPLIT FOYER", 
+       `090` = "DUPLEX - ALL STYLES AND AGES", 
+       `120` = "1-STORY PUD - 1946 & NEWER", 
+       `150` = "1-1/2 STORY PUD - ALL AGES", 
+       `160` = "2-STORY PUD - 1946 & NEWER",
+       `180` = "PUD - MULTILEVEL - INCL SPLIT LEV/FOYER",
+       `190` = "2 FAMILY CONVERSION - ALL STYLES AND AGES",
+       .default = NULL)
+
+AmesHousing$Fence <- recode(AmesHousing$Fence, 
+            `GdPrv` =  "Good Privacy",
+            `MnPrv`  =  "Minimum Privacy",
+            `GdWo`   =  "GoodWood", 
+            `MnWw`   = "Minimum Wood/Wire", 
+            .default = NULL)
+
 AmesHousing<-AmesHousing%>%
-  mutate(Fence = ifelse(is.na(Fence), "No Fence", 
-                 ifelse(Fence == "GdPrv", "Good Privacy", 
-                 ifelse(Fence == "MnPrv", "Minimum Privacy", 
-                 ifelse(Fence == "GdWo", "GoodWood", "Minimum Wood/Wire")))),
-         Kitchen.Qual = ifelse(Kitchen.Qual == "Ex", "Excellent",
-                        ifelse(Kitchen.Qual == "Gd", "Good",
-                        ifelse(Kitchen.Qual == "TA", "Typical/Average",
-                        ifelse(Kitchen.Qual == "Fa", "Fair", "Poor")))),
-         Street = ifelse(Street == "Grvl", "Gravel", "Paved"), 
-         Land.Slope = ifelse(Land.Slope == "Gtl", "Gentle Slope", 
-                      ifelse(Land.Slope == "Mod", "Moderate Slope", "Severe Slope")), 
-         Utilities = ifelse(Utilities == "AllPub", "All public utilities", 
-                     ifelse(Utilities == "NoSewr", "Electricity, Gas, and Water", 
-                     ifelse(Utilities == "NoSeWa", "Electricity and Gas Only", "Electricity Only"))))
+  mutate(Fence = ifelse(is.na(Fence), "No Fence", Fence))
 
-#splitting the data into train and test dataset
+AmesHousing$Land.Slope <- recode(AmesHousing$Land.Slope, 
+            `Gtl` =  "Gentle Slope",
+            `Mod`  =  "Moderate Slop",
+            `Sev`   =  "Severe", 
+            .default = NULL)
+
+
+AmesHousing$Street <- recode(AmesHousing$Street, 
+            `Grvl` =  "Gravel",
+            `Pave`  =  "Paved",
+            .default = NULL)
+
+AmesHousing$Kitchen.Qual <- recode(AmesHousing$Kitchen.Qual, 
+            `Ex` =  5,
+            `Gd` =  4,
+            `TA` =  3,
+            `Fa` =  2,
+            `Po` =  1, 
+            .default = NULL)
+
+
+AmesHousing$Neighborhood <- recode(AmesHousing$Neighborhood, 
+       `Blmngtn` = "Bloomington Heights", 
+       `Blueste` = "Bluestem", 
+       `BrDale` = "Briardale", 
+       `BrkSide` = "Brookside", 
+       `ClearCr` = "Clear Creek", 
+       `CollgCr` = "College Creek",
+       `Crawfor` = "Crawford",
+       `Edwards` = "Edwards",
+       `Gilbert` = "Gilbert", 
+       `IDOTRR` = "Iowa DOT and Rail Road", 
+       `MeadowV` = "Meadow Village", 
+       `Mitchel` = "Mitchell", 
+       `Names` = "North Ames", 
+       `NoRidge` = "Northridge",
+       `NPkVill` = "Northpark Villa",
+       `NridgHt` = "Northridge Heights",
+       `NWAmes` = "Northwest Ames",
+       `OldTown` = "Old Town",
+       `SWISU` = "South & West Iowa State University",
+       `Sawyer` = "Sawyer",
+       `SawyerW` = "Sawyer West",
+       `Somerst` = "Somerset",
+       `StoneBr` = "Stone Brook",
+       `Timber` = "Timberland",
+       `Veenker` = "Veenker",
+       .default = NULL)
+
+
+
+```
+
+
+```{r Remove Small N categories, message=FALSE, warning=FALSE, echo = FALSE}
+AmesHousing <- AmesHousing %>% 
+  filter(home_type != "1-STORY W/FINISHED ATTIC ALL AGES" & home_type != "1-1/2 STORY PUD - ALL AGES")%>%
+  filter(!Neighborhood%in%c("GrnHill", "Landmrk", "Greens"))%>%
+  filter(Kitchen.Qual!=1)
+
+```
+
+
+# Introduction 
+
+The aim of this project....
+
+This project used data from 1500 residential property sales in Ames, Iowa between 2006 and 2012. There are 82 explanatory variables in the data set, containing -  nominal, ordinal, discrete, and continuous attributes.  Continuous variables provide information about the multiple area dimensions of the house and property, such as the the size of the lot, garage among others. Discrete variables, on the other hand, quantify characteristics of the house/properties like the number of kitchens, baths, bedrooms, and parking spots. Nominal variables, generally, describe the multiple types of materials and locations, such name of the neighborhood or the type of foundations. Ordinal variables typically rate the condition and quality of multiple house characteristics  and utilities. 
+
+
+
+# Exploratory Data Analysis 
+
+We decided to keep this as a continuous variable as opposed to switching it to a factor. We did so because changing it to a factor would have lead to us dropping the "Very Poor" or "1" factor level as this level only has around 4 observations. By keeping the variable continuous, we are able to keep these observations and so better predict the home prices of homes that fall under this category.
+
+
+
+
+### Exploring Selected Home Characteristics in the Dataset
+
+
+Sale Price graph
+
+
+```{r, warning = FALSE, echo = FALSE}
+# ggplot(AmesHousing, aes(x = saleprice)) +
+#   xlab("Sale Price (log)") +  geom_histogram()
+# 
+# ggplot(AmesHousing, aes(x = log(saleprice+1))) +
+#   xlab("Sale Price (log)") +  geom_histogram()
+
+```
+
+
+
+
+
+```{r Counts by lot area, echo=FALSE, warning=FALSE, message=FALSE, out.width="800px", out.height="600px"}
+
+count_lotA<-ggplot(AmesHousing, aes(x=lot_area)) + 
+  geom_histogram(binwidth=500, fill="darkred") +
+  theme(legend.position = "none") +
+  xlab("Lot Area") +
+  ylab("Count of Homes") +
+  ggtitle("Figure 2: Count of Homes by Lot Area")
+
+
+outlier.no <- length(boxplot.stats(AmesHousing$lot_area)$out)
+
+outlier.sum <- summary(boxplot.stats(AmesHousing$lot_area)$out)
+
+lot_area.outlier.rm <- filter(AmesHousing, lot_area < 17755)
+
+count_lotA_2<- ggplot(lot_area.outlier.rm, aes(x=lot_area)) + 
+  geom_histogram(binwidth=500, fill="darkred") +
+  theme(legend.position = "none") +
+  xlab("Lot Area") + 
+  ggtitle(" ")
+
+
+library(cowplot)
+
+plot_grid(count_lotA, count_lotA_2)
+#https://stackoverflow.com/questions/1249548/side-by-side-plots-with-ggplot2
+
+```
+
+```{r Counts by home type, message=FALSE, warning=FALSE, echo = FALSE}
+
+AmesHousing <- within(AmesHousing, home_type <- factor(home_type, levels=names(sort(table(home_type), decreasing=TRUE))))
+# https://stackoverflow.com/questions/5208679/order-bars-in-ggplot2-bar-graph
+
+ ggplotly(ggplot(AmesHousing, aes(x=home_type)) + 
+  geom_bar(stat="count", fill="darkred") +
+  theme(axis.text.x=element_text(angle=-90, hjust=0)) +
+  theme(legend.position = "none") +
+  xlab("Type of Home") +
+  ylab("Count") +
+  ggtitle("Figure 3: Count of Home Type"))
+
+```
+
+
+```{r counts by year built, echo=FALSE, warning=FALSE, message=FALSE}
+
+ggplotly(ggplot(AmesHousing, aes(x=year_built)) + 
+  geom_histogram(binwidth=5, fill="darkred") +
+  theme(legend.position = "none") +
+  xlab("Year Built (5 Year Increments)") +
+  ylab("Count of Homes") +
+  ggtitle("Figure 4: Count of Homes by Year Built"))
+
+```
+
+
+When it comes to lot area, this dataset has many outliers as shown above. We found that there were `r outlier.no` outliers greater than the minimum outlier value of `r outlier.sum[1]`. As these made visualization difficult, we temporarily removed them.
+After removing the outliers, we can see that homes have a somewhat normal distribution in terms of lot area near the median of `r summary(AmesHousing$lot_area)[3]` square feet.
+
+
+From **Figure 3**, we see that 1-story homes that were built in 1946 or later make up the bulk of our dataset, specifically `r nrow(filter(AmesHousing, home_type=="1-STORY 1946 & NEWER ALL STYLES"))`. This is over one-third of our total dataset which has `r nrow(AmesHousing)` observations. Please not that the graphs are interactive so move your cursor over the graph to see more details.
+Furthermore, we can also observe from **Figure 4**, that most homes were built within a 5 year time range of 2005. 
+
+
+
+Summary Statistics
+```{r, echo = FALSE}
+# table(AmesHousing$Kitchen.Qual)
+summary(AmesHousing$Kitchen.Qual)
+
+```
+
+
+
+## Relationship Between Sale Price and Selected Characteristics 
+
+
+Some intro text 
+
+
+
+
+```{r Saleprice distribution Neighborhood, message=FALSE, warning=FALSE, echo=FALSE, out.width="800px", out.height="800px"}
+  
+ggplotly(AmesHousing %>%
+  ggplot( aes(x=reorder(Neighborhood, saleprice, FUN = median), y=saleprice)) +
+    scale_fill_viridis(discrete = TRUE, alpha=0.5) +
+    geom_jitter(color=rgb(0.1,0.4,0.5,0.7), size=0.4, alpha=0.5) +
+   geom_boxplot(fill = rgb(0.1,0.4,0.5,0.7)) +
+    theme(
+      legend.position="none",
+      plot.title = element_text(size=11)
+    ) +
+    ggtitle("Figure 5: Sale Price vs. Neighborhood") +
+    xlab("Neighborhood") +
+    ylab("Sale Price")+
+    scale_y_continuous(labels = dollar)+
+  theme(plot.title = element_text(hjust = 0.5),axis.text.x =  element_text(angle = -90)))
+#reorder(Species, Sepal.Width, FUN = median)
+```
+
+
+```{r saleprice distribution x overal q, echo=FALSE, warning=FALSE, message=FALSE, out.width="800px", out.height="600px"}
+
+graph6<- ggplot(AmesHousing, aes(overall_qual, saleprice)) + 
+  geom_point(stat="identity", color=rgb(0.1,0.4,0.5,0.7)) +
+  theme(legend.position = "none") +
+  xlab("Overall Quality (10 is Best)") +
+  ylab("Average Sale Price") +
+  scale_y_continuous(labels = dollar)+
+  ggtitle("Figure 6: Home Price By Overall Quality") +
+  geom_smooth()
+
+
+graph7<- ggplot(AmesHousing, aes(year_built, saleprice)) + 
+  geom_point(stat="identity", color=rgb(0.1,0.4,0.5,0.7)) +
+  theme(legend.position = "none") +
+  xlab("Year Built") +
+  ylab("Average Sale Price") +
+  scale_y_continuous(labels = dollar)+
+  ggtitle("Figure 7: Average Home Price By Year Built") +
+  geom_smooth(method=lm)
+
+
+plot_grid(graph6, graph7)
+```
+
+
+
+```{r Saleprice distribution home type, message=FALSE, warning=FALSE, echo=FALSE, out.width="800px", out.height="800px"}
+ ggplotly(AmesHousing %>%
+  ggplot(aes(fct_rev(fct_reorder(home_type, saleprice)), saleprice)) +
+    scale_fill_viridis(discrete = TRUE, alpha=0.5) +
+    geom_jitter(color=rgb(0.1,0.4,0.5,0.7), size=0.4, alpha=0.5) +
+    geom_boxplot(fill = rgb(0.1,0.4,0.5,0.7)) +
+    theme(legend.position="none", plot.title = element_text(size=11)) +
+    ggtitle("Figure 8: Sale Price vs. Home Type") +
+    xlab("Home Type") +
+    ylab("Sale Price") +
+    scale_y_continuous(labels = dollar)+
+    theme(plot.title = element_text(hjust = 0.5), axis.text.x=element_text(angle=-90, hjust=0)))
+
+
+
+```
+
+
+```{r sale price distribution  kitchen qual, warning=FALSE, message= FALSE, echo=FALSE,out.width="800px", out.height="600px"}
+
+
+
+
+graph9<- ggplot(AmesHousing, aes(Kitchen.Qual, saleprice)) +
+  geom_point(stat="identity", color=rgb(0.1,0.4,0.5,0.7)) +
+  theme(legend.position = "none") +
+  xlab("Overall Quality (5 is Best)") +
+  ylab("Sale Price") +
+  scale_y_continuous(labels = dollar)+
+  ggtitle("Figure 9: Home Price By Kitchen Quality") +
+  geom_smooth(method = "lm", formula = y ~ poly(x, 2), aes(colour = "Quadratic fit"))
+
+
+graph10<-ggplot(lot_area.outlier.rm, aes(lot_area, saleprice)) + 
+  geom_point(stat="identity", color=rgb(0.1,0.4,0.5,0.7)) +
+  theme(legend.position = "none") +
+  xlab("Lot Area") +
+  ylab("Average Sale Price") +
+  scale_y_continuous(labels = dollar)+
+  ggtitle("Figure 10: Home Price By Lot Area") +
+  geom_smooth(method=lm)
+
+plot_grid(graph9, graph10)
+```
+
+
+**Neighborhood** We can observe a large variation in sale price across across different neighborhoods. Even within neighborhood we also see variation. Investigating some housing characteristics may give us insight into the variation observed in price within neighborhoods. 
+
+
+In terms of overall quality, as expected price increases as overall quality increases. 
+
+
+As one would expect, the newer a home is, the higher its price, on average.
+
+When looking at home type by sale price, we find that 2 story homes built in the year 1946 or later have the highest median home prices.
+
+
+
+There was only one house that had a rating of for kitchen quality, thus this observation was removed from the data. We see a non-linear relationship between kitchen quality and sale price. The higher the kitchen quality the higher the median sale price. From **Figure 10**, we can see that - as expected - there is a gradual positive relationship between lot area and sales price.
+
+
+
+
+```{r Splitting into test/train , message=FALSE, warning=FALSE, echo=FALSE}
+
 training <- AmesHousing%>%
   filter(Yr.Sold != 2010)
 
 testing <- AmesHousing%>%
   filter(Yr.Sold == 2010)
-
-
 ```
-
-
-Examining SalePrice
-
-* Right skewed, should we do a log-transformation?
-
-
-
-```{r, warning = FALSE, echo = FALSE}
-ggplot(AmesHousing, aes(x = SalePrice)) +
-  xlab("Sale Price (log)") +  geom_histogram()
-
-ggplot(AmesHousing, aes(x = log(SalePrice+1))) +
-  xlab("Sale Price (log)") +  geom_histogram()
-
-```
-
-
-## Neighborhoods
-
-how do we deal with categories with low #?
-
-
-```{r, echo = FALSE}
-table(AmesHousing$Neighborhood)
-```
-
-```{r, echo = FALSE}
-  
-AmesHousing %>%
-  ggplot( aes(x=reorder(Neighborhood, SalePrice, FUN = median), y=SalePrice)) +
-    scale_fill_viridis(discrete = TRUE, alpha=0.5) +
-    geom_jitter(color=rgb(0.1,0.4,0.5,0.7), size=0.4, alpha=0.5) +
-   geom_boxplot(fill = rgb(0.1,0.4,0.5,0.7)) +
-    theme(
-      legend.position="none",
-      plot.title = element_text(size=11)
-    ) +
-    ggtitle("Figure 1: Sale Price vs. Neighborhood") +
-    xlab("Neighborhood") + 
-  theme(plot.title = element_text(hjust = 0.5),axis.text.x =  element_text(angle = 90))
-  
-#reorder(Species, Sepal.Width, FUN = median)
-```
-
-
-
-We can observe a large variation in sale price across across different neighborhoods. Even within neighborhood we also see variation. Investigating some housing characteristics may give us insight into the variation observed in price within neighborhoods. 
-
-## Kitchen Quality
-
-
-```{r, echo = FALSE}
-table(AmesHousing$Kitchen.Qual)
-```
-
-```{r, warning=FALSE, echo=FALSE}
-
-  
-
-base_plot<- ggplot( aes(x=Kitchen.Qual, y=SalePrice), data = AmesHousing)
-
-base_plot+
-    scale_fill_viridis(discrete = TRUE, alpha=0.5) +
-    geom_jitter(color=rgb(0.1,0.4,0.5,0.7), size=0.4, alpha=0.5) +
-   geom_boxplot(fill = rgb(0.1,0.4,0.5,0.7)) +
-    theme(
-      legend.position="none",
-      plot.title = element_text(size=11)
-    ) +
-    ggtitle("Figure 2: Sale Price vs. Kitchen Quality") +
-    xlab("Kitchen Quality") + 
-  theme(plot.title = element_text(hjust = 0.5))
-
-AmesHousing %>%
-  ggplot( aes(x=Kitchen.Qual, y=SalePrice)) +
-    scale_fill_viridis(discrete = TRUE, alpha=0.5) +
-    geom_jitter(color=rgb(0.1,0.4,0.5,0.7), size=0.4, alpha=0.5) +
-   geom_boxplot(fill = rgb(0.1,0.4,0.5,0.7)) +
-    theme(
-      legend.position="none",
-      plot.title = element_text(size=11)
-    ) +
-    ggtitle("Figure 2: Sale Price vs. Kitchen Quality") +
-    xlab("Kitchen Quality") + 
-  theme(plot.title = element_text(hjust = 0.5))
-  
-
-#convert to double
-```
-
-We see a non-linear relationship between kitchen quality and sale price. The higher the kitchen quality the higher the median sale price. 
-
-**Should we just drop `Poor` or combine it with fair?**
-
-## Fence Quality
-
-```{r,echo = FALSE}
-table(AmesHousing$Fence)
-```
-
-```{r, echo = FALSE}
-# Plot
-AmesHousing %>%
-  ggplot( aes(x=reorder(Fence, SalePrice, FUN = median), y=SalePrice)) +
-    scale_fill_viridis(discrete = TRUE, alpha=0.5) +
-    geom_jitter(color = rgb(0.1,0.4,0.5,0.7), size=0.4, alpha=0.5) +
-   geom_boxplot(fill = rgb(0.1,0.4,0.5,0.7)) +
-    theme(
-      legend.position="none",
-      plot.title = element_text(size=11)
-    ) +
-    ggtitle("Figure 3: Sale Price vs. Quality of Fence") +
-    xlab("Fence Quality") + 
-  theme(plot.title = element_text(hjust = 0.5))
-  
-```
-
-There does not seem to be a clear relationship between sale price and fence. We can observe that the majority of the houses do not have a fence. The median price for houses with no fence is slightly higher median price than houses with fences. 
-
-
-```{r, echo = FALSE}
-# Plot
-AmesHousing %>%
-  mutate(Fence = ifelse(Fence == "No Fence", "No Fence", "Fence"))%>%
-  ggplot( aes(x=reorder(Fence, SalePrice, FUN = median), y=SalePrice)) +
-    scale_fill_viridis(discrete = TRUE, alpha=0.5) +
-    geom_jitter(color = rgb(0.1,0.4,0.5,0.7), size=0.4, alpha=0.5) +
-   geom_boxplot(fill = rgb(0.1,0.4,0.5,0.7)) +
-    theme(
-      legend.position="none",
-      plot.title = element_text(size=11)
-    ) +
-    ggtitle("Figure 3b: Sale Price vs. Fence on Property") +
-    xlab("Fence on property") + 
-  theme(plot.title = element_text(hjust = 0.5))
-  
-```
-
-
-## Street Quality
-
-
-```{r, echo = FALSE}
-table(AmesHousing$Street)
-#table(AmesHousing$Street)
-```
-
-```{r, echo = FALSE}
-
-
-AmesHousing %>%
-  ggplot( aes(x=Street, y=SalePrice)) +
-    scale_fill_viridis(discrete = TRUE, alpha=0.5) +
-    geom_jitter(color=rgb(0.1,0.4,0.5,0.7), size=0.4, alpha=0.5) +
-   geom_boxplot(fill = rgb(0.1,0.4,0.5,0.7)) +
-    theme(
-      legend.position="none",
-      plot.title = element_text(size=11)
-    ) +
-    ggtitle("Figure 4: Sale Price vs. Type of Road Access to Property") +
-    xlab("Type of Street") + 
-  theme(plot.title = element_text(hjust = 0.5))
-  
-```
-
-
-From Figure 4 we see that there is little variation in type of road access in our dataset. The majority of the houses have a paved road. There are only 12 observations with the Gravel category. Thus, we will not include this variable in our model.
-
-
-## LandSlope
-
-
-
-```{r, echo = FALSE}
-table(AmesHousing$Land.Slope)
-```
-
-
-```{r, echo = FALSE}
-
-
-
-AmesHousing %>%
-  ggplot( aes(x=Land.Slope, y=SalePrice)) +
-    scale_fill_viridis(discrete = TRUE, alpha=0.5) +
-    geom_jitter(color=rgb(0.1,0.4,0.5,0.7), size=0.4, alpha=0.5) +
-   geom_boxplot(fill = rgb(0.1,0.4,0.5,0.7)) +
-    theme(
-      legend.position="none",
-      plot.title = element_text(size=11)
-    ) +
-    ggtitle("Figure 5: Sale Price vs. Slope of Property") +
-    xlab("Land Slope") + 
-  theme(plot.title = element_text(hjust = 0.5))
-  
-```
-
-
-
-## Utilities
-
-
-```{r, echo = FALSE}
-table(AmesHousing$Utilities)
-```
-
-
-```{r, echo=FALSE}
-
-AmesHousing %>%
-  ggplot( aes(x=Utilities, y=SalePrice)) +
-    scale_fill_viridis(discrete = TRUE, alpha=0.5) +
-    geom_jitter(color=rgb(0.1,0.4,0.5,0.7), size=0.4, alpha=0.5) +
-   geom_boxplot(fill = rgb(0.1,0.4,0.5,0.7)) +
-    theme(
-      legend.position="none",
-      plot.title = element_text(size=11)
-    ) +
-    ggtitle("Figure 6: Sale Price vs. Utilities") +
-    xlab("Utilities") + 
-  theme(plot.title = element_text(hjust = 0.5))
-
-
-```
-
-We can see that there is little variation among utility features within the dataset. Most of the houses have all public utilities, which results us not including this variable in our model, as it won't help with any predictive modeling. 
-
 
 
 
