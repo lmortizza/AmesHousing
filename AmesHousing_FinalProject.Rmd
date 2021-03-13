@@ -1,0 +1,515 @@
+---
+title: "Ames Housing Final Project"
+date: "Last updated on `r Sys.Date()`"
+author: "Group E"
+output:
+  html_document:
+    df_print: kable
+    highlight: tango
+    number_sections: yes
+    theme: cosmo
+    toc: yes
+    toc_depth: 2
+    toc_float:
+      collapsed: yes
+---
+
+The aim of this project....
+
+This project used data from 1500 residential property sales in Ames, Iowa between 2006 and 2012. There are 82 explanatory variables in the data set, containing -  nominal, ordinal, discrete, and continuous attributes.  Continuous variables provide information about the multiple area dimensions of the house and property, such as the the size of the lot, garage among others. Discrete variables, on the other hand, quantify characteristics of the house/properties like the number of kitchens, baths, bedrooms, and parking spots. Nominal variables, generally, describe the multiple types of materials and locations, such name of the neighborhood or the type of foundations. Ordinal variables typically rate the condition and quality of multiple house characteristics  and utilities. 
+
+
+
+# EDA
+
+
+```{r, warning=FALSE, message = FALSE, echo=FALSE}
+library(ggplot2)
+library(tidyr)
+library(dplyr)
+library(ggcorrplot)
+#library(GGally) 
+#install.packages("ggthemes") # Install 
+library(ggthemes) # Load
+library(hrbrthemes)
+library(viridis)
+# install.packages("hrbrthemes") # Install 
+# install.packages("viridis")
+library(leaps)
+library(boot)   # needed for cv.glm
+library(MASS)
+library(glmnet)
+library(ggpubr)
+library(gridExtra)
+library(knitr)
+library(boot)
+library(gam)
+library(GGally) 
+
+library(ggcorrplot)
+```
+
+```{r,echo=FALSE}
+AmesHousing <- read.csv("AmesHousing.csv")
+```
+
+
+How much is missing in the raw data?
+
+There is no missing data relating to the 5 categorical variables. NAs in the Fence variable indicate No Fence.Consequently, recoded `NA`s as `No Fence`
+```{r, echo=FALSE}
+
+
+# 
+# table(is.na(AmesHousing$Fence))
+# #2358
+# 
+# table(is.na(AmesHousing$Street))
+# table(is.na(AmesHousing$Land.Slope))
+# table(is.na(AmesHousing$Utilities))
+# table(is.na(AmesHousing$Neighborhood))
+# table(is.na(AmesHousing$Kitchen.Qual))
+# table(is.na(AmesHousing$SalePrice))
+
+```
+
+
+
+```{r, echo=FALSE}
+AmesHousing<-AmesHousing%>%
+  mutate(Fence = ifelse(is.na(Fence), "No Fence", 
+                 ifelse(Fence == "GdPrv", "Good Privacy", 
+                 ifelse(Fence == "MnPrv", "Minimum Privacy", 
+                 ifelse(Fence == "GdWo", "GoodWood", "Minimum Wood/Wire")))),
+         Kitchen.Qual = ifelse(Kitchen.Qual == "Ex", "Excellent",
+                        ifelse(Kitchen.Qual == "Gd", "Good",
+                        ifelse(Kitchen.Qual == "TA", "Typical/Average",
+                        ifelse(Kitchen.Qual == "Fa", "Fair", "Poor")))),
+         Street = ifelse(Street == "Grvl", "Gravel", "Paved"), 
+         Land.Slope = ifelse(Land.Slope == "Gtl", "Gentle Slope", 
+                      ifelse(Land.Slope == "Mod", "Moderate Slope", "Severe Slope")), 
+         Utilities = ifelse(Utilities == "AllPub", "All public utilities", 
+                     ifelse(Utilities == "NoSewr", "Electricity, Gas, and Water", 
+                     ifelse(Utilities == "NoSeWa", "Electricity and Gas Only", "Electricity Only"))))
+
+#splitting the data into train and test dataset
+training <- AmesHousing%>%
+  filter(Yr.Sold != 2010)
+
+testing <- AmesHousing%>%
+  filter(Yr.Sold == 2010)
+
+
+```
+
+
+Examining SalePrice
+
+* Right skewed, should we do a log-transformation?
+
+```{r, echo = FALSE}
+
+
+# ggdensity(training$SalePrice, 
+#           main = "Density plot of SalePrice",
+#           xlab = "SalePrice")
+# 
+# ggplot(training, aes(x = SalePrice)) +
+#   xlab("Sale Price") +  geom_histogram()
+# 
+# ggqqplot(training$SalePrice)
+# 
+# 
+# ##### LOG
+# 
+# 
+# #density
+# ggplot(training, aes(x = SalePrice)) +
+#   xlab("Sale Price") +  geom_histogram()
+# 
+# ggdensity(log(training$SalePrice +1), 
+#           main = "Density plot of SalePrice",
+#           xlab = "SalePrice")
+# 
+# #qqplot
+# ggqqplot(log(training$SalePrice +1))
+
+```
+
+```{r, warning = FALSE, echo = FALSE}
+ggplot(AmesHousing, aes(x = SalePrice)) +
+  xlab("Sale Price (log)") +  geom_histogram()
+
+ggplot(AmesHousing, aes(x = log(SalePrice+1))) +
+  xlab("Sale Price (log)") +  geom_histogram()
+
+```
+
+
+## Neighborhoods
+
+how do we deal with categories with low #?
+
+
+```{r, echo = FALSE}
+table(AmesHousing$Neighborhood)
+```
+
+```{r, echo = FALSE}
+  
+AmesHousing %>%
+  ggplot( aes(x=reorder(Neighborhood, SalePrice, FUN = median), y=SalePrice)) +
+    scale_fill_viridis(discrete = TRUE, alpha=0.5) +
+    geom_jitter(color=rgb(0.1,0.4,0.5,0.7), size=0.4, alpha=0.5) +
+   geom_boxplot(fill = rgb(0.1,0.4,0.5,0.7)) +
+    theme(
+      legend.position="none",
+      plot.title = element_text(size=11)
+    ) +
+    ggtitle("Figure 1: Sale Price vs. Neighborhood") +
+    xlab("Neighborhood") + 
+  theme(plot.title = element_text(hjust = 0.5),axis.text.x =  element_text(angle = 90))
+  
+#reorder(Species, Sepal.Width, FUN = median)
+```
+
+
+
+We can observe a large variation in sale price across across different neighborhoods. Even within neighborhood we also see variation. Investigating some housing characteristics may give us insight into the variation observed in price within neighborhoods. 
+
+## Kitchen Quality
+
+
+```{r, echo = FALSE}
+table(AmesHousing$Kitchen.Qual)
+```
+
+```{r, warning=FALSE, echo=FALSE}
+
+  
+
+base_plot<- ggplot( aes(x=Kitchen.Qual, y=SalePrice), data = AmesHousing)
+
+base_plot+
+    scale_fill_viridis(discrete = TRUE, alpha=0.5) +
+    geom_jitter(color=rgb(0.1,0.4,0.5,0.7), size=0.4, alpha=0.5) +
+   geom_boxplot(fill = rgb(0.1,0.4,0.5,0.7)) +
+    theme(
+      legend.position="none",
+      plot.title = element_text(size=11)
+    ) +
+    ggtitle("Figure 2: Sale Price vs. Kitchen Quality") +
+    xlab("Kitchen Quality") + 
+  theme(plot.title = element_text(hjust = 0.5))
+
+AmesHousing %>%
+  ggplot( aes(x=Kitchen.Qual, y=SalePrice)) +
+    scale_fill_viridis(discrete = TRUE, alpha=0.5) +
+    geom_jitter(color=rgb(0.1,0.4,0.5,0.7), size=0.4, alpha=0.5) +
+   geom_boxplot(fill = rgb(0.1,0.4,0.5,0.7)) +
+    theme(
+      legend.position="none",
+      plot.title = element_text(size=11)
+    ) +
+    ggtitle("Figure 2: Sale Price vs. Kitchen Quality") +
+    xlab("Kitchen Quality") + 
+  theme(plot.title = element_text(hjust = 0.5))
+  
+
+#convert to double
+```
+
+We see a non-linear relationship between kitchen quality and sale price. The higher the kitchen quality the higher the median sale price. 
+
+**Should we just drop `Poor` or combine it with fair?**
+
+## Fence Quality
+
+```{r,echo = FALSE}
+table(AmesHousing$Fence)
+```
+
+```{r, echo = FALSE}
+# Plot
+AmesHousing %>%
+  ggplot( aes(x=reorder(Fence, SalePrice, FUN = median), y=SalePrice)) +
+    scale_fill_viridis(discrete = TRUE, alpha=0.5) +
+    geom_jitter(color = rgb(0.1,0.4,0.5,0.7), size=0.4, alpha=0.5) +
+   geom_boxplot(fill = rgb(0.1,0.4,0.5,0.7)) +
+    theme(
+      legend.position="none",
+      plot.title = element_text(size=11)
+    ) +
+    ggtitle("Figure 3: Sale Price vs. Quality of Fence") +
+    xlab("Fence Quality") + 
+  theme(plot.title = element_text(hjust = 0.5))
+  
+```
+
+There does not seem to be a clear relationship between sale price and fence. We can observe that the majority of the houses do not have a fence. The median price for houses with no fence is slightly higher median price than houses with fences. 
+
+
+```{r, echo = FALSE}
+# Plot
+AmesHousing %>%
+  mutate(Fence = ifelse(Fence == "No Fence", "No Fence", "Fence"))%>%
+  ggplot( aes(x=reorder(Fence, SalePrice, FUN = median), y=SalePrice)) +
+    scale_fill_viridis(discrete = TRUE, alpha=0.5) +
+    geom_jitter(color = rgb(0.1,0.4,0.5,0.7), size=0.4, alpha=0.5) +
+   geom_boxplot(fill = rgb(0.1,0.4,0.5,0.7)) +
+    theme(
+      legend.position="none",
+      plot.title = element_text(size=11)
+    ) +
+    ggtitle("Figure 3b: Sale Price vs. Fence on Property") +
+    xlab("Fence on property") + 
+  theme(plot.title = element_text(hjust = 0.5))
+  
+```
+
+
+## Street Quality
+
+
+```{r, echo = FALSE}
+table(AmesHousing$Street)
+#table(AmesHousing$Street)
+```
+```{r, echo = FALSE}
+
+
+AmesHousing %>%
+  ggplot( aes(x=Street, y=SalePrice)) +
+    scale_fill_viridis(discrete = TRUE, alpha=0.5) +
+    geom_jitter(color=rgb(0.1,0.4,0.5,0.7), size=0.4, alpha=0.5) +
+   geom_boxplot(fill = rgb(0.1,0.4,0.5,0.7)) +
+    theme(
+      legend.position="none",
+      plot.title = element_text(size=11)
+    ) +
+    ggtitle("Figure 4: Sale Price vs. Type of Road Access to Property") +
+    xlab("Type of Street") + 
+  theme(plot.title = element_text(hjust = 0.5))
+  
+```
+
+
+From Figure 4 we see that there is little variation in type of road access in our dataset. The majority of the houses have a paved road. There are only 12 observations with the Gravel category. Thus, we will not include this variable in our model.
+
+
+## LandSlope
+
+
+
+```{r, echo = FALSE}
+table(AmesHousing$Land.Slope)
+```
+
+
+```{r, echo = FALSE}
+
+
+
+AmesHousing %>%
+  ggplot( aes(x=Land.Slope, y=SalePrice)) +
+    scale_fill_viridis(discrete = TRUE, alpha=0.5) +
+    geom_jitter(color=rgb(0.1,0.4,0.5,0.7), size=0.4, alpha=0.5) +
+   geom_boxplot(fill = rgb(0.1,0.4,0.5,0.7)) +
+    theme(
+      legend.position="none",
+      plot.title = element_text(size=11)
+    ) +
+    ggtitle("Figure 5: Sale Price vs. Slope of Property") +
+    xlab("Land Slope") + 
+  theme(plot.title = element_text(hjust = 0.5))
+  
+```
+
+```{r, echo = FALSE}
+
+AmesHousing %>%
+  mutate(Land.Slope = ifelse(Land.Slope == "Gentle Slope", "Gentle Slope", "Moderate/Severe Slope"))%>%
+  ggplot( aes(x=Land.Slope, y=SalePrice)) +
+    scale_fill_viridis(discrete = TRUE, alpha=0.5) +
+    geom_jitter(color=rgb(0.1,0.4,0.5,0.7), size=0.4, alpha=0.5) +
+   geom_boxplot(fill = rgb(0.1,0.4,0.5,0.7)) +
+    theme(
+      legend.position="none",
+      plot.title = element_text(size=11)
+    ) +
+    ggtitle("Figure 5b: Sale Price vs. Slope of Property") +
+    xlab("Land Slope") + 
+  theme(plot.title = element_text(hjust = 0.5))
+  
+```
+
+
+
+## Utilities
+
+
+```{r, echo = FALSE}
+table(AmesHousing$Utilities)
+```
+
+
+```{r, echo=FALSE}
+
+AmesHousing %>%
+  ggplot( aes(x=Utilities, y=SalePrice)) +
+    scale_fill_viridis(discrete = TRUE, alpha=0.5) +
+    geom_jitter(color=rgb(0.1,0.4,0.5,0.7), size=0.4, alpha=0.5) +
+   geom_boxplot(fill = rgb(0.1,0.4,0.5,0.7)) +
+    theme(
+      legend.position="none",
+      plot.title = element_text(size=11)
+    ) +
+    ggtitle("Figure 6: Sale Price vs. Utilities") +
+    xlab("Utilities") + 
+  theme(plot.title = element_text(hjust = 0.5))
+
+
+```
+
+We can see that there is little variation among utility features within the dataset. Most of the houses have all public utilities, which results us not including this variable in our model, as it won't help with any predictive modeling. 
+
+
+
+
+```{r, echo=FALSE}
+
+# table(AmesHousing$Lot.Shape)
+# 
+# AmesHousing %>%
+#   ggplot( aes(x=Lot.Shape, y=SalePrice)) +
+#     scale_fill_viridis(discrete = TRUE, alpha=0.5) +
+#     geom_jitter(color = rgb(0.1,0.4,0.5,0.7), size=0.4, alpha=0.5) +
+#    geom_boxplot(fill = rgb(0.1,0.4,0.5,0.7)) +
+#     theme(
+#       legend.position="none",
+#       plot.title = element_text(size=11)
+#     ) +
+#     ggtitle("Figure 3: Sale Price vs. General shape of property") +
+#     xlab("Lot Shape") +
+#   theme(plot.title = element_text(hjust = 0.5))
+
+
+# AmesHousing %>%
+#   mutate(Lot.Shape = ifelse(Lot.Shape == "Reg", "Regular", "Irregular"))%>%
+#   ggplot( aes(x=Lot.Shape, y=SalePrice)) +
+#     scale_fill_viridis(discrete = TRUE, alpha=0.5) +
+#     geom_jitter(color = rgb(0.1,0.4,0.5,0.7), size=0.4, alpha=0.5) +
+#    geom_boxplot(fill = rgb(0.1,0.4,0.5,0.7)) +
+#     theme(
+#       legend.position="none",
+#       plot.title = element_text(size=11)
+#     ) +
+#     ggtitle("Figure 3: Sale Price vs. General shape of property") +
+#     xlab("Lot Shape") +
+#   theme(plot.title = element_text(hjust = 0.5))
+
+
+# AmesHousing %>%
+#   ggplot( aes(x=as.factor(Mo.Sold), y=SalePrice)) +
+#     scale_fill_viridis(discrete = TRUE, alpha=0.5) +
+#     geom_jitter(color=rgb(0.1,0.4,0.5,0.7), size=0.4, alpha=0.5) +
+#    geom_boxplot(fill = rgb(0.1,0.4,0.5,0.7)) +
+#     theme(
+#       legend.position="none",
+#       plot.title = element_text(size=11)
+#     ) +
+#     ggtitle("Figure 6: Sale Price vs. Utilities") +
+#     xlab("Utilities") + 
+#   theme(plot.title = element_text(hjust = 0.5))
+
+```
+
+
+
+
+
+  
+```{r, echo=FALSE}
+
+# inc.sum.tbl <- AmesHousing %>%
+#   group_by(Neighborhood, Kitchen.Qual) %>%
+#   summarize(count = n(),
+#             high.earn.rate = median(SalePrice))
+# 
+# 
+# ggplot(data = inc.sum.tbl,
+#        aes(x = Kitchen.Qual, y = high.earn.rate, fill = Kitchen.Qual)) +
+#   geom_bar(stat = "identity") +
+#   facet_wrap(~Neighborhood) +
+#   theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+#   guides(fill = FALSE) + 
+#   xlab("Neighborhood") +
+#   ylab("Median SalePrice")
+# 
+# 
+# 
+# inc.sum.tbl <- AmesHousing %>%
+#   group_by(Neighborhood, Fence) %>%
+#   summarize(count = n(),
+#             high.earn.rate = median(SalePrice))
+# 
+# 
+# 
+# ggplot(data = inc.sum.tbl,
+#        aes(x = Fence, y = high.earn.rate, fill = Fence)) +
+#   geom_bar(stat = "identity") +
+#   facet_wrap(~Neighborhood) +
+#   theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+#   guides(fill = FALSE) + 
+#   xlab("Fence Quality") +
+#   ylab("Median SalePrice")
+```
+
+
+
+```{r, echo=FALSE}
+
+# Home Characteristics
+
+# Aditya
+# Full Bath
+# TotRmsAbvGrd
+# Lot Area
+# Overall Quality
+# Year BUilt
+# MSSubClass
+
+# Shannon
+# Garage Qual
+# Exterior1st
+# Foundation
+# BsmtQual
+# HeatingQC
+# CentralAir
+# RoofStyle
+
+# Lidia
+# KitchenQual
+# Fence
+# Street
+# LandSlope
+# Utilities
+# Neighborhood (separate!)
+
+# summary(AmesHousing)
+# class(AmesHousing$Kitchen.Qual)
+# class(AmesHousing$Fence)
+# class(AmesHousing$Street)
+# class(AmesHousing$Land.Slope)
+# class()
+```
+
+
+
+# Subset Selection 
+# Random Forest 
+#Lasso Regression 
+
+
+
+
