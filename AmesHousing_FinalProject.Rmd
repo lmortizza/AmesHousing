@@ -384,6 +384,8 @@ graph9<- ggplot(AmesHousing, aes(Kitchen.Qual, saleprice)) +
   scale_y_continuous(labels = dollar)+
   ggtitle("Figure 9: Home Price By Kitchen Quality") +
   geom_smooth(method = "lm", formula = y ~ poly(x, 2), aes(colour = "Quadratic fit"))
+
+
 graph10<-ggplot(lot_area.outlier.rm, aes(lot_area, saleprice)) + 
   geom_point(stat="identity", color=rgb(0.1,0.4,0.5,0.7)) +
   theme(legend.position = "none") +
@@ -419,11 +421,86 @@ We see a non-linear relationship between kitchen quality and sale price. The hig
 # Methodology
 
 ```{r Splitting into test/train , message=FALSE, warning=FALSE, echo=FALSE}
-training <- AmesHousing%>%
+
+AmesHousing_Short<-AmesHousing%>%
+    select(
+    full_bath_abv_grd,
+    tot_rms_abv_grd,
+    home_type,
+    overall_qual,
+    lot_area,
+    year_built,
+    Garage.Qual,
+    Exterior.1st,
+    Foundation,
+    Bsmt.Qual,
+    Heating.QC,
+    Roof.Style,
+    Kitchen.Qual,
+    Neighborhood,
+    Fence,
+    Street,
+    Land.Slope,
+    Yr.Sold, 
+    saleprice)
+
+training <- AmesHousing_Short%>%
   filter(Yr.Sold != 2010)
-testing <- AmesHousing%>%
+
+testing <- AmesHousing_Short%>%
   filter(Yr.Sold == 2010)
 ```
+
+
+```{r}
+
+
+
+
+regfit.fwd=regsubsets(saleprice~.,data=AmesHousing_Short,nvmax=19,method="forward")
+coef(regfit.fwd, which.min(summary(regfit.fwd)$bic))
+
+
+
+regfit.bwd=regsubsets(saleprice~.,data=AmesHousing_Short,nvmax=19,method="backward")
+coef(regfit.bwd, which.min(summary(regfit.bwd)$bic))
+
+
+
+```
+
+
+
+
+
+
+*****SHANNON'S SUBSET********
+```{r}
+
+```
+
+
+```{r}
+
+```
+
+
+
+*****JAY'S SUBSET********
+```{r}
+
+```
+
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+
 
 
 # Analysis
