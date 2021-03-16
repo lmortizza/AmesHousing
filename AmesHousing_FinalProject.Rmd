@@ -450,7 +450,7 @@ which.min(regfit.fwd.sum$bic)
 num_variables_fwd<-seq(1,length(regfit.fwd.sum$bic))
 #Note: Generates a sequence of numbers from 1 to the length of bic in lifexp.summary
 plot_BIC<-ggplot(data = data.frame(regfit.fwd.sum$bic),
-                 aes(x=num_variables,y=regfit.fwd.sum$bic))+
+                 aes(x=num_variables_fwd,y=regfit.fwd.sum$bic))+
   geom_line()+
   geom_point(x=which.min(regfit.fwd.sum$bic),
              y=min(regfit.fwd.sum$bic),aes(color="green"),
@@ -476,7 +476,7 @@ which.min(regfit.bwd.sum$bic)
 num_variables_bwd<-seq(1,length(regfit.bwd.sum$bic))
 #Note: Generates a sequence of numbers from 1 to the length of bic in lifexp.summary
 plot_BIC<-ggplot(data = data.frame(regfit.bwd.sum$bic),
-                 aes(x=num_variables,y=regfit.bwd.sum$bic))+
+                 aes(x=num_variables_bwd,y=regfit.bwd.sum$bic))+
   geom_line()+
   geom_point(x=which.min(regfit.bwd.sum$bic),
              y=min(regfit.bwd.sum$bic),aes(color="green"),
