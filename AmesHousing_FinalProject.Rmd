@@ -523,12 +523,13 @@ plot_BIC<-ggplot(data = data.frame(regfit.subset_sum$bic),
   xlab("# Variables")+
   ylab("BIC")+
   theme_bw()
+plot_BIC
 
 # BIC selected best subset model
 which.min(regfit.subset_sum$bic)
 ```
 
-```{r}
+```{r Splines}
 
 ```
 
