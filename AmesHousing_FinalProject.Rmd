@@ -437,9 +437,9 @@ training<-training[complete.cases(training), ]
 
 #forward selection
 regfit.fwd=regsubsets(saleprice~.,
-                data=AmesHousing_Short,
+                data=training,
                 nbest = 1, 
-                nvmax=19,
+                nvmax=7,
                 method="forward")
 
 #summary(regfit.fwd)
@@ -465,7 +465,7 @@ plot(regfit.bwd,scale="bic")
 regfit.subset <- regsubsets(saleprice~.,
                 data=training,
                 nbest = 1, 
-                nvmax = 19,
+                nvmax = 7,
                 method="exhaustive", really.big = TRUE)
 
 ```
