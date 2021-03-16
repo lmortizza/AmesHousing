@@ -8,9 +8,6 @@ output:
     fig_height: 6
 ---
 
-
-
-
 ```{r Loading Packages, echo=FALSE, message=FALSE, warning=FALSE}
 library(ggplot2)
 library(tidyr)
@@ -38,7 +35,6 @@ options(scipen=10000)
 ```{r loading data, message=TRUE, warning=FALSE, echo = FALSE}
 AmesHousing <- read.csv("AmesHousing.csv")
 ```
-
 
 ```{r Changing column names, message=FALSE, warning=FALSE, echo = FALSE}
 #changing column names
@@ -205,8 +201,6 @@ AmesHousing$Heating.QC <- recode(AmesHousing$Heating.QC,
 
 
 ```
-
-
 
 # Introduction 
 
@@ -403,9 +397,6 @@ Examining year built (**Figure 7**), we observe that the the newer a home is, th
 
 **Model Selection:**
 
-
-
-
 ```{r Splitting into test/train , message=FALSE, warning=FALSE, echo=FALSE}
 
 AmesHousing_Short<-AmesHousing%>%
@@ -436,11 +427,9 @@ training <- AmesHousing_Short%>%
 testing <- AmesHousing_Short%>%
   filter(Yr.Sold == 2010)
 
-
 # Remove missing values
 training<-training[complete.cases(training), ]
 ```
-
 
 ```{r forward/backward subset , message=FALSE, warning=FALSE, echo=FALSE}
 
@@ -470,39 +459,87 @@ plot(regfit.bwd,scale="bic")
 
 ```
 
-
-
-
-
 *****SHANNON'S SUBSET********
 ```{r}
 
 ```
 
-
 ```{r}
 
 ```
-
-
 
 *****JAY'S SUBSET********
 ```{r}
 
+grid_ames=10^seq(10,-2, length =100)
+
+x.train <- model.matrix(saleprice ~ ., training)[,-19]
+y.train <- training$saleprice
+
+lasso.mod_ames <- glmnet(x.train, y.train, alpha=1, lambda=as.matrix(grid_ames))
+plot(lasso.mod_ames)
+
+```
+
+```{r}
+
+set.seed(1)
+cv.out_ames <- cv.glmnet(x.train,y.train,alpha=1)
+plot(cv.out_ames)
+
+```
+
+```{r}
+
+bestlam_ames <- cv.out_ames$lambda.min
+bestlam_ames
+
+```
+
+```{r}
+
+x.test <- model.matrix(saleprice ~ ., testing)[,-19]
+y.test <- testing$saleprice
+
+```
+
+```{r}
+
+lasso.pred=predict(lasso.mod_ames,s=bestlam_ames,newx=as.matrix(x.test))
+
+```
+
+```{r}
+
+lasso.mod_ames
+
+```
+
+```{r}
+
+bestlam_ames
+
+```
+
+```{r}
+
+as.matrix(x.test)
+
 ```
 
 
 ```{r}
 
+mean((lasso.pred-y.test)^2)
+
 ```
+
 
 ```{r}
 
+testing
+
 ```
-
-
-
-
 
 
 # Analysis
