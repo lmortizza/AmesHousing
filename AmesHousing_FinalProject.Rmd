@@ -435,26 +435,63 @@ training<-training[complete.cases(training), ]
 
 
 
-#forward selection
+#`````````forward selection
 regfit.fwd=regsubsets(saleprice~.,
                 data=training,
                 nbest = 1, 
                 nvmax=7,
                 method="forward")
 
-#summary(regfit.fwd)
 
-# BIC selected forward stepwise model
+regfit.fwd.sum<-summary(regfit.fwd)
+which.min(regfit.fwd.sum$bic)
+
+#Plot of BIC for the subsets
+num_variables_fwd<-seq(1,length(regfit.fwd.sum$bic))
+#Note: Generates a sequence of numbers from 1 to the length of bic in lifexp.summary
+plot_BIC<-ggplot(data = data.frame(regfit.fwd.sum$bic),
+                 aes(x=num_variables,y=regfit.fwd.sum$bic))+
+  geom_line()+
+  geom_point(x=which.min(regfit.fwd.sum$bic),
+             y=min(regfit.fwd.sum$bic),aes(color="green"),
+             show.legend = FALSE)+
+  xlab("# Variables")+
+  ylab("BIC")+
+  theme_bw()
+
+plot_BIC
+
+
+#```````````````````sBIC selected forward stepwise model
 coef(regfit.fwd, which.min(summary(regfit.fwd)$bic))
 plot(regfit.fwd,scale="bic")
 #backward Selection
 
 regfit.bwd=regsubsets(saleprice~.,data=AmesHousing_Short,nvmax=19,method="backward")
 
+regfit.bwd.sum<-summary(regfit.fwd)
+which.min(regfit.bwd.sum$bic)
+
+#plot of BIC for the subsets
+num_variables_bwd<-seq(1,length(regfit.bwd.sum$bic))
+#Note: Generates a sequence of numbers from 1 to the length of bic in lifexp.summary
+plot_BIC<-ggplot(data = data.frame(regfit.bwd.sum$bic),
+                 aes(x=num_variables,y=regfit.bwd.sum$bic))+
+  geom_line()+
+  geom_point(x=which.min(regfit.bwd.sum$bic),
+             y=min(regfit.bwd.sum$bic),aes(color="green"),
+             show.legend = FALSE)+
+  xlab("# Variables")+
+  ylab("BIC")+
+  theme_bw()
+
+plot_BIC
+
 
 # BIC selected backward stepwise model
 coef(regfit.bwd, which.min(summary(regfit.bwd)$bic))
 plot(regfit.bwd,scale="bic")
+
 
 
 ```
@@ -495,7 +532,9 @@ which.min(regfit.subset_sum$bic)
 
 ```
 
-*****JAY'S SUBSET********
+
+
+***JAY'S SUBSET***
 
 ## Lasso
 
