@@ -684,19 +684,16 @@ plot.smoothCV(cv.tot_rms_abv_grd,
 
 ```{r CV Plot Overall Quality }
 #Chosen Variables: lot_area, tot_rms_abv_grd, overall_qual, Kitchen.Qual, year_built, NeighborhoodNorthridge, Bsmt.QualEx
-# cv.overall_qual <- smoothCV(x = training$overall_qual, 
-#                     y = training$saleprice, 
-#                     df.min = 1, 
-#                     df.max = 10)
-# plot.smoothCV(cv.overall_qual, 
-#               K = 10, 
-#               title.text = "CV Error: saleprice ~ overall_qual", 
-#               y.scale.factor = 1)
+cv.overall_qual <- smoothCV(x = training$overall_qual,
+                    y = training$saleprice,
+                    df.min = 1,
+                    df.max = 8)
+plot.smoothCV(cv.overall_qual,
+              K = 10,
+              title.text = "CV Error: saleprice ~ overall_qual",
+              y.scale.factor = 2)
 ```
 
-```{r}
-typeof(AmesHousing$Kitchen.Qual)
-```
 
 
 ```{r CV Plot Kitchen Quality}
@@ -704,7 +701,7 @@ typeof(AmesHousing$Kitchen.Qual)
 cv.Kitchen.Qual <- smoothCV(x = training$Kitchen.Qual, 
                     y = training$saleprice, 
                     df.min = 1, 
-                    df.max = 10)
+                    df.max = 3)
 plot.smoothCV(cv.Kitchen.Qual, 
               K = 10, 
               title.text = "CV Error: saleprice ~ Kitchen.Qual", 
@@ -727,27 +724,30 @@ plot.smoothCV(cv.year_built,
 
 ```{r CV Plot Neighborhood Northridge}
 #Chosen Variables: lot_area, tot_rms_abv_grd, overall_qual, Kitchen.Qual, year_built, NeighborhoodNorthridge, Bsmt.QualEx
-cv.NeighborhoodNorthridge <- smoothCV(x = training$NeighborhoodNorthridge, 
-                    y = training$saleprice, 
-                    df.min = 1, 
-                    df.max = 10)
-plot.smoothCV(cv.NeighborhoodNorthridge, 
-              K = 10, 
-              title.text = "CV Error: saleprice ~ NeighborhoodNorthridge", 
-              y.scale.factor = 2)
+# cv.Neighborhood <- smoothCV(x = training$Neighborhood, 
+#                     y = training$saleprice, 
+#                     df.min = 1, 
+#                     df.max = 10)
+# plot.smoothCV(cv.Neighborhood, 
+#               K = 10, 
+#               title.text = "CV Error: saleprice ~ Neighborhood", 
+#               y.scale.factor = 2)
 ```
 
 
 ```{r CV Plot Basement Quality}
-#Chosen Variables: lot_area, tot_rms_abv_grd, overall_qual, Kitchen.Qual, year_built, NeighborhoodNorthridge, Bsmt.QualEx
-cv.Bsmt.QualEx <- smoothCV(x = training$Bsmt.QualEx, 
-                    y = training$saleprice, 
-                    df.min = 1, 
-                    df.max = 10)
-plot.smoothCV(cv.Bsmt.QualEx, 
-              K = 10, 
-              title.text = "CV Error: saleprice ~ Bsmt.QualEx", 
-              y.scale.factor = 2)
+#Chosen Variables: lot_area, tot_rms_abv_grd, overall_qual, Kitchen.Qual, year_built, NeighborhoodNorthridge, Bsmt.Qual
+# cv.Bsmt.QualEx <- smoothCV(x = training$Bsmt.QualEx, 
+#                     y = training$saleprice, 
+#                     df.min = 1, 
+#                     df.max = 10)
+# plot.smoothCV(cv.Bsmt.QualEx, 
+#               K = 10, 
+#               title.text = "CV Error: saleprice ~ Bsmt.QualEx", 
+#               y.scale.factor = 2)
+
+
+#Note: Bcmt.Qual is a character, need to change to double 
 ```
 
 ***JAY'S SUBSET***
