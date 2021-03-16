@@ -496,7 +496,6 @@ plot(regfit.bwd,scale="bic")
 
 ```
 
-*****SHANNON'S SUBSET********
 ```{r best subset selection, cache = TRUE}
 #Best subset selection
 regfit.subset <- regsubsets(saleprice~.,
@@ -528,11 +527,12 @@ plot_BIC
 # BIC selected best subset model
 which.min(regfit.subset_sum$bic)
 ```
-
-```{r Splines}
-
+```{r}
+names(coef(regfit.fwd, 7))
+names(coef(regfit.bwd, 7))
+names(coef(regfit.subset, 7))
 ```
-
+Chosen Variables: lot_area, tot_rms_abv_grd, overall_qual, Kitchen.Qual, year_built, NeighborhoodNorthridge, Bsmt.QualEx
 
 
 ***JAY'S SUBSET***
