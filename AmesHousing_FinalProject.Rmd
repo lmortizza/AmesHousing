@@ -460,8 +460,35 @@ plot(regfit.bwd,scale="bic")
 ```
 
 *****SHANNON'S SUBSET********
-```{r}
+```{r best subset selection, cache = TRUE}
+#Best subset selection
+regfit.subset <- regsubsets(saleprice~.,
+                data=training,
+                nbest = 1, 
+                nvmax = 19,
+                method="exhaustive", really.big = TRUE)
 
+```
+
+```{r best subset BIC plot}
+regfit.subset_sum<-summary(regfit.subset)
+#regfit.subset_sum
+
+#Plot of BIC for the subsets
+num_variables<-seq(1,length(regfit.subset_sum$bic))
+#Note: Generates a sequence of numbers from 1 to the length of bic in lifexp.summary
+plot_BIC<-ggplot(data = data.frame(regfit.subset_sum$bic),
+                 aes(x=num_variables,y=regfit.subset_sum$bic))+
+  geom_line()+
+  geom_point(x=which.min(regfit.subset_sum$bic),
+             y=min(regfit.subset_sum$bic),aes(color="green"),
+             show.legend = FALSE)+
+  xlab("# Variables")+
+  ylab("BIC")+
+  theme_bw()
+
+# BIC selected best subset model
+which.min(regfit.subset_sum$bic)
 ```
 
 ```{r}
