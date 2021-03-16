@@ -469,7 +469,12 @@ plot(regfit.bwd,scale="bic")
 ```
 
 *****JAY'S SUBSET********
+
+## Lasso
+
 ```{r}
+
+AmesHousing_Short.na.rm <-AmesHousing_Short[complete.cases(AmesHousing_Short), ]
 
 grid_ames=10^seq(10,-2, length =100)
 
@@ -498,6 +503,8 @@ bestlam_ames
 
 ```{r}
 
+testing.na.rm <-testing[complete.cases(testing), ]
+
 x.test <- model.matrix(saleprice ~ ., testing)[,-19]
 y.test <- testing$saleprice
 
@@ -505,42 +512,107 @@ y.test <- testing$saleprice
 
 ```{r}
 
-lasso.pred=predict(lasso.mod_ames,s=bestlam_ames,newx=as.matrix(x.test))
+# Not sure what is causing this error...
+
+# lasso.pred=predict(lasso.mod_ames,s=bestlam_ames,newx=x.test)
 
 ```
 
 ```{r}
 
-lasso.mod_ames
+bestlam.1se_ames <- cv.out_ames$lambda.1se
+bestlam.1se_ames
 
 ```
 
 ```{r}
 
-bestlam_ames
+x.full <- model.matrix(saleprice ~ ., AmesHousing_Short.na.rm)[,-19]
+y.full <- AmesHousing_Short.na.rm$saleprice
+
+model.refit <- glmnet(x.full,y.full,alpha=1,lambda=grid_ames)
+
+# the lambda-min model
+lasso.coef_ames=predict(model.refit,type="coefficients",s=bestlam_ames)[1:20,]
+lasso.coef_ames
 
 ```
 
 ```{r}
 
-as.matrix(x.test)
+lasso.coef_ames[lasso.coef_ames!=0]
+
+```
+
+```{r}
+
+# the lambda-min model
+lasso.coef.1se_ames=predict(model.refit,type="coefficients",s=bestlam.1se_ames)[1:20,]
+lasso.coef.1se_ames
+
+```
+
+```{r}
+
+lasso.coef.1se_ames[lasso.coef.1se_ames!=0]
+
+```
+
+## Polynomial Regression
+
+```{r}
+
+poly.lm <- lm(saleprice ~ poly(lot_area, 2, raw = TRUE) + 
+                poly(full_bath_abv_grd, 2, raw = TRUE) +
+                tot_rms_abv_grd +
+                poly(lot_area, 2, raw = TRUE) +
+                home_type
+                , data = training)
+
+poly.lm.sum <- summary(poly.lm)
+
+poly.lm.sum
+
+```
+
+```{r}
+
+lasso.1se.coef.list.train <- training %>% 
+  select(lot_area,
+         full_bath_abv_grd,
+         tot_rms_abv_grd,
+         home_type,
+         saleprice)
 
 ```
 
 
 ```{r}
 
-mean((lasso.pred-y.test)^2)
+# training error
+
+preds <- predict(poly.lm, lasso.1se.coef.list.train)
+
+mean((lasso.1se.coef.list.train$saleprice - preds)^2)
 
 ```
-
 
 ```{r}
 
-testing
+# test error
+
+lasso.1se.coef.list.test <- testing %>% 
+  select(lot_area,
+         full_bath_abv_grd,
+         tot_rms_abv_grd,
+         home_type,
+         saleprice)
+
+preds <- predict(poly.lm, lasso.1se.coef.list.test)
+
+mean((lasso.1se.coef.list.test$saleprice - preds)^2)
 
 ```
-
 
 # Analysis
 
