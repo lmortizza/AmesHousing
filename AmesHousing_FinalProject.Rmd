@@ -441,7 +441,7 @@ AmesHousing_Short<-AmesHousing%>%
     Fence,
     Street,
     Land.Slope,
-    Yr.Sold, 
+    Yr.Sold,
     saleprice)
 
 training <- AmesHousing_Short%>%
@@ -449,22 +449,37 @@ training <- AmesHousing_Short%>%
 
 testing <- AmesHousing_Short%>%
   filter(Yr.Sold == 2010)
+
+
+# Remove missing values
+training<-training[complete.cases(training), ]
 ```
 
 
-```{r}
+```{r forward/backward subset , message=FALSE, warning=FALSE, echo=FALSE}
 
 
 
+#forward selection
+regfit.fwd=regsubsets(saleprice~.,
+                data=AmesHousing_Short,
+                nbest = 1, 
+                nvmax=19,
+                method="forward")
 
-regfit.fwd=regsubsets(saleprice~.,data=AmesHousing_Short,nvmax=19,method="forward")
+#summary(regfit.fwd)
+
+# BIC selected forward stepwise model
 coef(regfit.fwd, which.min(summary(regfit.fwd)$bic))
-
-
+plot(regfit.fwd,scale="bic")
+#backward Selection
 
 regfit.bwd=regsubsets(saleprice~.,data=AmesHousing_Short,nvmax=19,method="backward")
-coef(regfit.bwd, which.min(summary(regfit.bwd)$bic))
 
+
+# BIC selected backward stepwise model
+coef(regfit.bwd, which.min(summary(regfit.bwd)$bic))
+plot(regfit.bwd,scale="bic")
 
 
 ```
