@@ -641,6 +641,62 @@ mean((lasso.1se.coef.list.test$saleprice - preds)^2)
 
 ```
 
+## Polynomial Regression
+
+```{r}
+
+poly.lm <- lm(saleprice ~ poly(lot_area, 2, raw = TRUE) + 
+                poly(full_bath_abv_grd, 2, raw = TRUE) +
+                tot_rms_abv_grd +
+                poly(lot_area, 2, raw = TRUE) +
+                home_type
+                , data = training)
+
+poly.lm.sum <- summary(poly.lm)
+
+poly.lm.sum
+
+```
+
+```{r}
+
+lasso.1se.coef.list.train <- training %>% 
+  select(lot_area,
+         full_bath_abv_grd,
+         tot_rms_abv_grd,
+         home_type,
+         saleprice)
+
+```
+
+
+```{r}
+
+# training error
+
+preds <- predict(poly.lm, lasso.1se.coef.list.train)
+
+mean((lasso.1se.coef.list.train$saleprice - preds)^2)
+
+```
+
+```{r}
+
+# test error
+
+lasso.1se.coef.list.test <- testing %>% 
+  select(lot_area,
+         full_bath_abv_grd,
+         tot_rms_abv_grd,
+         home_type,
+         saleprice)
+
+preds <- predict(poly.lm, lasso.1se.coef.list.test)
+
+mean((lasso.1se.coef.list.test$saleprice - preds)^2)
+
+```
+
 # Analysis
 
 
