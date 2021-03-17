@@ -201,6 +201,14 @@ AmesHousing$Heating.QC <- recode(AmesHousing$Heating.QC,
             `Po` = 1,
             .default = NULL)
 
+AmesHousing$Bsmt.Qual <- recode(AmesHousing$Bsmt.Qual, 
+            `Ex` =  100,
+            `Gd`  =  90,
+            `TA`   =  80, 
+            `FA`   = 70,
+            `Po`   = 35,
+            `NA`   = 0,
+            .default = NULL)
 
 ```
 
@@ -337,7 +345,6 @@ graph7<- ggplot(AmesHousing, aes(year_built, saleprice)) +
   geom_smooth(method=lm)
 plot_grid(graph6, graph7)
 ```
-
 
 
 ```{r Saleprice distribution home type, message=FALSE, warning=FALSE, echo=FALSE, out.width="800px", out.height="800px"}
@@ -545,7 +552,6 @@ polyTestErr <- function(dat, train, d) {
   mean((dat$y[-train] - preds)^2)
 }
 
-
 cubicSplineTestErr <- function(dat, train, df) {
   if(df >= 3) {
     spline.fit <- lm(y ~ bs(x, df = df), data = dat, subset = train)
@@ -722,41 +728,23 @@ plot.smoothCV(cv.year_built,
 
 A cubic spline with 8 degrees of freedom appears to be the best model in this case. Other models are close in CV error and are fairly stable, but the cubic spline model has the lowest error.
 
-```{r CV Plot Neighborhood Northridge}
-# Chosen Variables: lot_area, tot_rms_abv_grd, overall_qual, Kitchen.Qual, year_built, NeighborhoodNorthridge, Bsmt.QualEx
-
-# cv.Neighborhood <- smoothCV(x = training$Neighborhood,
-#                     y = training$saleprice,
-#                     df.min = 1,
-#                     df.max = 10)
-# plot.smoothCV(cv.Neighborhood,
-#               K = 10,
-#               title.text = "CV Error: saleprice ~ Neighborhood",
-#               y.scale.factor = 2)
-```
-
-```{r}
-
-training
-
-```
-
-
 ```{r CV Plot Basement Quality}
 #Chosen Variables: lot_area, tot_rms_abv_grd, overall_qual, Kitchen.Qual, year_built, NeighborhoodNorthridge, Bsmt.Qual
-# cv.Bsmt.QualEx <- smoothCV(x = training$Bsmt.QualEx, 
-#                     y = training$saleprice, 
-#                     df.min = 1, 
-#                     df.max = 10)
-# plot.smoothCV(cv.Bsmt.QualEx, 
-#               K = 10, 
-#               title.text = "CV Error: saleprice ~ Bsmt.QualEx", 
-#               y.scale.factor = 2)
 
 
-#Note: Bcmt.Qual is a character, need to change to double 
+
+cv.Bsmt.Qual <- smoothCV(x = training$Bsmt.Qual,
+                    y = training$saleprice,
+                    df.min = 1,
+                    df.max = 3)
+plot.smoothCV(cv.Bsmt.Qual,
+              K = 10,
+              title.text = "CV Error: saleprice ~ Bsmt.Qual",
+              y.scale.factor = 1.1)
+
 ```
 
+A degree three polynomial appears to be the best option as it has the lowest CV error rate. Cubic spline has only one point so it is unclear whether it has a stable trend.
 
 
 ***JAY'S SUBSET***
