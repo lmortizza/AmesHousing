@@ -810,6 +810,7 @@ rmse
 
 mae <- sum(abs(lm.predict-testing$saleprice ))/nrow(testing)
 mae
+#https://towardsdatascience.com/metrics-to-understand-regression-models-in-plain-english-part-1-c902b2f4156f
 
 
 ```
