@@ -428,8 +428,14 @@ AmesHousing_Short<-AmesHousing%>%
     Fence,
     Street,
     Land.Slope,
+    full_bath_abv_grd,
     Yr.Sold,
-    saleprice)
+    saleprice,
+    BsmtFin.Type.1)
+
+
+# Remove missing values
+AmesHousing_Short<-AmesHousing_Short[complete.cases(AmesHousing_Short), ]
 
 training <- AmesHousing_Short%>%
   filter(Yr.Sold != 2010)
@@ -437,11 +443,11 @@ training <- AmesHousing_Short%>%
 testing <- AmesHousing_Short%>%
   filter(Yr.Sold == 2010)
 
-# Remove missing values
-training<-training[complete.cases(training), ]
+
+
 ```
 
-```{r forward/backward subset , message=FALSE, warning=FALSE, echo=FALSE}
+```{r forward subset , message=FALSE, warning=FALSE, echo=FALSE}
 
 
 
@@ -452,13 +458,10 @@ regfit.fwd=regsubsets(saleprice~.,
                 nvmax=7,
                 method="forward")
 
-
-regfit.fwd.sum<-summary(regfit.fwd)
-which.min(regfit.fwd.sum$bic)
+regfit.fwd_sum<-summary(regfit.fwd)
 
 #Plot of BIC for the subsets
 num_variables_fwd<-seq(1,length(regfit.fwd.sum$bic))
-#Note: Generates a sequence of numbers from 1 to the length of bic in lifexp.summary
 plot_BIC<-ggplot(data = data.frame(regfit.fwd.sum$bic),
                  aes(x=num_variables_fwd,y=regfit.fwd.sum$bic))+
   geom_line()+
@@ -470,21 +473,27 @@ plot_BIC<-ggplot(data = data.frame(regfit.fwd.sum$bic),
   theme_bw()
 
 plot_BIC
+# BIC selected best subset model
+which.min(regfit.fwd_sum$bic)
+
+```
+
+```{r backward subset , message=FALSE, warning=FALSE, echo=FALSE}
 
 
-#```````````````````sBIC selected forward stepwise model
-coef(regfit.fwd, which.min(summary(regfit.fwd)$bic))
-plot(regfit.fwd,scale="bic")
 #backward Selection
 
-regfit.bwd=regsubsets(saleprice~.,data=AmesHousing_Short,nvmax=19,method="backward")
+regfit.bwd=regsubsets(saleprice~.,
+                      data=training,
+                      nbest = 1, 
+                      nvmax=7,
+                      method="backward")
 
-regfit.bwd.sum<-summary(regfit.fwd)
-which.min(regfit.bwd.sum$bic)
+regfit.bwd_sum<-summary(regfit.bwd)
+
 
 #plot of BIC for the subsets
 num_variables_bwd<-seq(1,length(regfit.bwd.sum$bic))
-#Note: Generates a sequence of numbers from 1 to the length of bic in lifexp.summary
 plot_BIC<-ggplot(data = data.frame(regfit.bwd.sum$bic),
                  aes(x=num_variables_bwd,y=regfit.bwd.sum$bic))+
   geom_line()+
@@ -498,12 +507,10 @@ plot_BIC<-ggplot(data = data.frame(regfit.bwd.sum$bic),
 plot_BIC
 
 
-# BIC selected backward stepwise model
-coef(regfit.bwd, which.min(summary(regfit.bwd)$bic))
-plot(regfit.bwd,scale="bic")
 
 
-
+# BIC selected best subset model
+which.min(regfit.bwd_sum$bic)
 ```
 
 ```{r best subset selection, cache = TRUE}
@@ -741,6 +748,7 @@ plot.smoothCV(cv.Bsmt.Qual,
               title.text = "CV Error: saleprice ~ Bsmt.Qual",
               y.scale.factor = 1.1)
 
+
 ```
 
 A degree three polynomial appears to be the best option as it has the lowest CV error rate. Cubic spline has only one point so it is unclear whether it has a stable trend.
@@ -775,15 +783,38 @@ mean((training$saleprice - gam.preds.train)^2)
 
 # GAM Test Error
 
-testing<-testing[complete.cases(testing), ]
 
 testing.gam <- testing[,c("tot_rms_abv_grd", "overall_qual", "lot_area", "year_built", "Bsmt.Qual", "Kitchen.Qual", "Neighborhood")]
+
 
 gam.preds.test <- predict.Gam(gam.fit, testing.gam)
 
 mean((testing$saleprice - gam.preds.test)^2)
 
 ```
+
+
+```{r}
+
+
+lm.fit  <- lm(saleprice ~ lot_area + Neighborhood + 
+            year_built + tot_rms_abv_grd +
+            overall_qual + Bsmt.Qual + 
+            Kitchen.Qual + full_bath_abv_grd + 
+             Roof.Style + BsmtFin.Type.1 , data = training)
+
+lm.predict <- predict(lm.fit, newdata = testing)
+
+rmse <- sqrt(mean((lm.predict- testing$saleprice  )^2))
+rmse
+
+mae <- sum(abs(lm.predict-testing$saleprice ))/nrow(testing)
+mae
+
+
+```
+
+
 
 # Analysis
 
