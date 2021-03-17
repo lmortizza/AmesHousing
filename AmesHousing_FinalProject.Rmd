@@ -731,8 +731,6 @@ A cubic spline with 8 degrees of freedom appears to be the best model in this ca
 ```{r CV Plot Basement Quality}
 #Chosen Variables: lot_area, tot_rms_abv_grd, overall_qual, Kitchen.Qual, year_built, NeighborhoodNorthridge, Bsmt.Qual
 
-
-
 cv.Bsmt.Qual <- smoothCV(x = training$Bsmt.Qual,
                     y = training$saleprice,
                     df.min = 1,
@@ -746,206 +744,43 @@ plot.smoothCV(cv.Bsmt.Qual,
 
 A degree three polynomial appears to be the best option as it has the lowest CV error rate. Cubic spline has only one point so it is unclear whether it has a stable trend.
 
-
-***JAY'S SUBSET***
-
-## Lasso
-
 ```{r}
 
-AmesHousing_Short.na.rm <-AmesHousing_Short[complete.cases(AmesHousing_Short), ]
-
-grid_ames=10^seq(10,-2, length =100)
-
-x.train <- model.matrix(saleprice ~ ., training)[,-19]
-y.train <- training$saleprice
-
-lasso.mod_ames <- glmnet(x.train, y.train, alpha=1, lambda=as.matrix(grid_ames))
-plot(lasso.mod_ames)
+gam.fit <- gam(saleprice ~ s(lot_area, 2) + 
+                 s(tot_rms_abv_grd, 6) + 
+                 s(overall_qual, 6) +  
+                 poly(Kitchen.Qual, 2) +
+                 bs(year_built, 8) +
+                 poly(Bsmt.Qual, 3) +
+                 Neighborhood,
+               data = training)
 
 ```
 
 ```{r}
 
-set.seed(1)
-cv.out_ames <- cv.glmnet(x.train,y.train,alpha=1)
-plot(cv.out_ames)
+# GAM Training Error
+
+gam.fit.sum <- summary(gam.fit)
+
+training.gam <- training[,c("tot_rms_abv_grd", "overall_qual", "lot_area", "year_built", "Bsmt.Qual", "Kitchen.Qual", "Neighborhood")]
+
+gam.preds.train <- predict.Gam(gam.fit, training.gam)
+
+mean((training$saleprice - gam.preds.train)^2)
 
 ```
-
 ```{r}
 
-bestlam_ames <- cv.out_ames$lambda.min
-bestlam_ames
+# GAM Test Error
 
-```
+testing<-testing[complete.cases(testing), ]
 
-```{r}
+testing.gam <- testing[,c("tot_rms_abv_grd", "overall_qual", "lot_area", "year_built", "Bsmt.Qual", "Kitchen.Qual", "Neighborhood")]
 
-testing.na.rm <-testing[complete.cases(testing), ]
+gam.preds.test <- predict.Gam(gam.fit, testing.gam)
 
-x.test <- model.matrix(saleprice ~ ., testing)[,-19]
-y.test <- testing$saleprice
-
-```
-
-```{r}
-
-# Not sure what is causing this error...
-
-# lasso.pred=predict(lasso.mod_ames,s=bestlam_ames,newx=x.test)
-
-```
-
-```{r}
-
-bestlam.1se_ames <- cv.out_ames$lambda.1se
-bestlam.1se_ames
-
-```
-
-```{r}
-
-x.full <- model.matrix(saleprice ~ ., AmesHousing_Short.na.rm)[,-19]
-y.full <- AmesHousing_Short.na.rm$saleprice
-
-model.refit <- glmnet(x.full,y.full,alpha=1,lambda=grid_ames)
-
-# the lambda-min model
-lasso.coef_ames=predict(model.refit,type="coefficients",s=bestlam_ames)[1:20,]
-lasso.coef_ames
-
-```
-
-```{r}
-
-lasso.coef_ames[lasso.coef_ames!=0]
-
-```
-
-```{r}
-
-# the lambda-min model
-lasso.coef.1se_ames=predict(model.refit,type="coefficients",s=bestlam.1se_ames)[1:20,]
-lasso.coef.1se_ames
-
-```
-
-```{r}
-
-lasso.coef.1se_ames[lasso.coef.1se_ames!=0]
-
-```
-
-## Polynomial Regression
-
-```{r}
-
-poly.lm <- lm(saleprice ~ poly(lot_area, 2, raw = TRUE) + 
-                poly(full_bath_abv_grd, 2, raw = TRUE) +
-                tot_rms_abv_grd +
-                poly(lot_area, 2, raw = TRUE) +
-                home_type
-                , data = training)
-
-poly.lm.sum <- summary(poly.lm)
-
-poly.lm.sum
-
-```
-
-```{r}
-
-lasso.1se.coef.list.train <- training %>% 
-  select(lot_area,
-         full_bath_abv_grd,
-         tot_rms_abv_grd,
-         home_type,
-         saleprice)
-
-```
-
-
-```{r}
-
-# training error
-
-preds <- predict(poly.lm, lasso.1se.coef.list.train)
-
-mean((lasso.1se.coef.list.train$saleprice - preds)^2)
-
-```
-
-```{r}
-
-# test error
-
-lasso.1se.coef.list.test <- testing %>% 
-  select(lot_area,
-         full_bath_abv_grd,
-         tot_rms_abv_grd,
-         home_type,
-         saleprice)
-
-preds <- predict(poly.lm, lasso.1se.coef.list.test)
-
-mean((lasso.1se.coef.list.test$saleprice - preds)^2)
-
-```
-
-## Polynomial Regression
-
-```{r}
-
-poly.lm <- lm(saleprice ~ poly(lot_area, 2, raw = TRUE) + 
-                poly(full_bath_abv_grd, 2, raw = TRUE) +
-                tot_rms_abv_grd +
-                poly(lot_area, 2, raw = TRUE) +
-                home_type
-                , data = training)
-
-poly.lm.sum <- summary(poly.lm)
-
-poly.lm.sum
-
-```
-
-```{r}
-
-lasso.1se.coef.list.train <- training %>% 
-  select(lot_area,
-         full_bath_abv_grd,
-         tot_rms_abv_grd,
-         home_type,
-         saleprice)
-
-```
-
-
-```{r}
-
-# training error
-
-preds <- predict(poly.lm, lasso.1se.coef.list.train)
-
-mean((lasso.1se.coef.list.train$saleprice - preds)^2)
-
-```
-
-```{r}
-
-# test error
-
-lasso.1se.coef.list.test <- testing %>% 
-  select(lot_area,
-         full_bath_abv_grd,
-         tot_rms_abv_grd,
-         home_type,
-         saleprice)
-
-preds <- predict(poly.lm, lasso.1se.coef.list.test)
-
-mean((lasso.1se.coef.list.test$saleprice - preds)^2)
+mean((testing$saleprice - gam.preds.test)^2)
 
 ```
 
