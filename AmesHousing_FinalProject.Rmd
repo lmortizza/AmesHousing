@@ -529,6 +529,7 @@ plot_BIC
 # BIC selected best subset model
 which.min(regfit.subset_sum$bic)
 ```
+
 ```{r}
 names(coef(regfit.fwd, 7))
 names(coef(regfit.bwd, 7))
@@ -564,9 +565,6 @@ smoothSplineTestErr <- function(dat, train, df) {
     NA
   }
 }
-
-
-
 
 smoothCV <- function(x, y, K = 10, df.min = 1, df.max = 10) {
   dat <- data.frame(x = x, y = y) #creates a data frame out the x and y vectors inputted
@@ -617,9 +615,6 @@ smoothCV <- function(x, y, K = 10, df.min = 1, df.max = 10) {
   err.out
 }
 
-
-
-
 plot.smoothCV <- function(smoothcv.err, K, title.text = "", facet = FALSE,
                           y.scale.factor = NULL) {
 
@@ -666,8 +661,10 @@ cv.lot_area <- smoothCV(x = training$lot_area,
 plot.smoothCV(cv.lot_area, 
               K = 10, 
               title.text = "CV Error: saleprice ~ lot_area", 
-              y.scale.factor = 2)
+              y.scale.factor = 1.5)
 ```
+
+A degree 2 smoothing spline appears to be the best model choice for lot area. It has the lowest CV error and the lowest has the most stable curve.
 
 ```{r CV Plot Total Rooms Above Grade}
 #Chosen Variables: lot_area, tot_rms_abv_grd, overall_qual, Kitchen.Qual, year_built, NeighborhoodNorthridge, Bsmt.QualEx
@@ -678,9 +675,10 @@ cv.tot_rms_abv_grd <- smoothCV(x = training$tot_rms_abv_grd,
 plot.smoothCV(cv.tot_rms_abv_grd, 
               K = 10, 
               title.text = "CV Error: saleprice ~ tot_rms_abv_grd", 
-              y.scale.factor = 2)
+              y.scale.factor = 1.4)
 ```
 
+A degree 6 smoothing spline appears to be the best fit for the total rooms above grade variable. While a lower degree cubic spine is comparable, the cubic spline becomes more unstable at higher degrees.
 
 ```{r CV Plot Overall Quality }
 #Chosen Variables: lot_area, tot_rms_abv_grd, overall_qual, Kitchen.Qual, year_built, NeighborhoodNorthridge, Bsmt.QualEx
@@ -691,10 +689,10 @@ cv.overall_qual <- smoothCV(x = training$overall_qual,
 plot.smoothCV(cv.overall_qual,
               K = 10,
               title.text = "CV Error: saleprice ~ overall_qual",
-              y.scale.factor = 2)
+              y.scale.factor = 1.3)
 ```
 
-
+A degree 6 smoothing spline appears to be a good fit here, however other models appear to do comparably as well. 
 
 ```{r CV Plot Kitchen Quality}
 #Chosen Variables: lot_area, tot_rms_abv_grd, overall_qual, Kitchen.Qual, year_built, NeighborhoodNorthridge, Bsmt.QualEx
@@ -705,9 +703,10 @@ cv.Kitchen.Qual <- smoothCV(x = training$Kitchen.Qual,
 plot.smoothCV(cv.Kitchen.Qual, 
               K = 10, 
               title.text = "CV Error: saleprice ~ Kitchen.Qual", 
-              y.scale.factor = 2)
+              y.scale.factor = 1.1)
 ```
 
+A quadratic polynomial appear to be the best fit for this model as it has the lowest error.
 
 ```{r CV Plot Year Built}
 #Chosen Variables: lot_area, tot_rms_abv_grd, overall_qual, Kitchen.Qual, year_built, NeighborhoodNorthridge, Bsmt.QualEx
@@ -718,20 +717,28 @@ cv.year_built <- smoothCV(x = training$year_built,
 plot.smoothCV(cv.year_built, 
               K = 10, 
               title.text = "CV Error: saleprice ~ year_built", 
-              y.scale.factor = 2)
+              y.scale.factor = 1.2)
 ```
 
+A cubic spline with 8 degrees of freedom appears to be the best model in this case. Other models are close in CV error and are fairly stable, but the cubic spline model has the lowest error.
 
 ```{r CV Plot Neighborhood Northridge}
-#Chosen Variables: lot_area, tot_rms_abv_grd, overall_qual, Kitchen.Qual, year_built, NeighborhoodNorthridge, Bsmt.QualEx
-# cv.Neighborhood <- smoothCV(x = training$Neighborhood, 
-#                     y = training$saleprice, 
-#                     df.min = 1, 
+# Chosen Variables: lot_area, tot_rms_abv_grd, overall_qual, Kitchen.Qual, year_built, NeighborhoodNorthridge, Bsmt.QualEx
+
+# cv.Neighborhood <- smoothCV(x = training$Neighborhood,
+#                     y = training$saleprice,
+#                     df.min = 1,
 #                     df.max = 10)
-# plot.smoothCV(cv.Neighborhood, 
-#               K = 10, 
-#               title.text = "CV Error: saleprice ~ Neighborhood", 
+# plot.smoothCV(cv.Neighborhood,
+#               K = 10,
+#               title.text = "CV Error: saleprice ~ Neighborhood",
 #               y.scale.factor = 2)
+```
+
+```{r}
+
+training
+
 ```
 
 
@@ -749,6 +756,8 @@ plot.smoothCV(cv.year_built,
 
 #Note: Bcmt.Qual is a character, need to change to double 
 ```
+
+
 
 ***JAY'S SUBSET***
 
