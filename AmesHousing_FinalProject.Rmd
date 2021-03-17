@@ -458,7 +458,7 @@ regfit.fwd=regsubsets(saleprice~.,
                 nvmax=7,
                 method="forward")
 
-regfit.fwd_sum<-summary(regfit.fwd)
+regfit.fwd.sum<-summary(regfit.fwd)
 
 #Plot of BIC for the subsets
 num_variables_fwd<-seq(1,length(regfit.fwd.sum$bic))
@@ -474,7 +474,7 @@ plot_BIC<-ggplot(data = data.frame(regfit.fwd.sum$bic),
 
 plot_BIC
 # BIC selected best subset model
-which.min(regfit.fwd_sum$bic)
+which.min(regfit.fwd.sum$bic)
 
 ```
 
@@ -489,7 +489,7 @@ regfit.bwd=regsubsets(saleprice~.,
                       nvmax=7,
                       method="backward")
 
-regfit.bwd_sum<-summary(regfit.bwd)
+regfit.bwd.sum<-summary(regfit.bwd)
 
 
 #plot of BIC for the subsets
@@ -510,7 +510,7 @@ plot_BIC
 
 
 # BIC selected best subset model
-which.min(regfit.bwd_sum$bic)
+which.min(regfit.bwd.sum$bic)
 ```
 
 ```{r best subset selection, cache = TRUE}
@@ -761,7 +761,8 @@ gam.fit <- gam(saleprice ~ s(lot_area, 2) +
                  poly(Kitchen.Qual, 2) +
                  bs(year_built, 8) +
                  poly(Bsmt.Qual, 3) +
-                 Neighborhood,
+                 Neighborhood + full_bath_abv_grd + 
+             Roof.Style + BsmtFin.Type.1,
                data = training)
 
 ```
@@ -772,7 +773,7 @@ gam.fit <- gam(saleprice ~ s(lot_area, 2) +
 
 gam.fit.sum <- summary(gam.fit)
 
-training.gam <- training[,c("tot_rms_abv_grd", "overall_qual", "lot_area", "year_built", "Bsmt.Qual", "Kitchen.Qual", "Neighborhood")]
+training.gam <- training[,c("tot_rms_abv_grd", "overall_qual", "lot_area", "year_built", "Bsmt.Qual", "Kitchen.Qual", "Neighborhood", "full_bath_abv_grd","Roof.Style", "BsmtFin.Type.1")]
 
 gam.preds.train <- predict.Gam(gam.fit, training.gam)
 
@@ -784,12 +785,16 @@ mean((training$saleprice - gam.preds.train)^2)
 # GAM Test Error
 
 
-testing.gam <- testing[,c("tot_rms_abv_grd", "overall_qual", "lot_area", "year_built", "Bsmt.Qual", "Kitchen.Qual", "Neighborhood")]
+testing.gam <- testing[,c("tot_rms_abv_grd", "overall_qual", "lot_area", "year_built", "Bsmt.Qual", "Kitchen.Qual", "Neighborhood", "full_bath_abv_grd","Roof.Style", "BsmtFin.Type.1")]
 
 
 gam.preds.test <- predict.Gam(gam.fit, testing.gam)
 
-mean((testing$saleprice - gam.preds.test)^2)
+rmse.gam <- sqrt(mean((testing$saleprice - gam.preds.test)^2))
+rmse.gam
+
+mae.gam <- sum(abs(gam.preds.test-testing$saleprice))/nrow(testing)
+mae.gam
 
 ```
 
@@ -805,12 +810,17 @@ lm.fit  <- lm(saleprice ~ lot_area + Neighborhood +
 
 lm.predict <- predict(lm.fit, newdata = testing)
 
-rmse <- sqrt(mean((lm.predict- testing$saleprice  )^2))
-rmse
+rmse.lm <- sqrt(mean((lm.predict- testing$saleprice  )^2))
+rmse.lm
 
-mae <- sum(abs(lm.predict-testing$saleprice ))/nrow(testing)
-mae
+mae.lm <- sum(abs(lm.predict-testing$saleprice ))/nrow(testing)
+mae.lm
 #https://towardsdatascience.com/metrics-to-understand-regression-models-in-plain-english-part-1-c902b2f4156f
+
+
+```
+
+```{r Renovation Calculator}
 
 
 ```
@@ -827,8 +837,8 @@ mae
 
 
 ```{r Remove Small N categories, message=FALSE, warning=FALSE, echo = FALSE}
-AmesHousing <- AmesHousing %>% 
-  filter(home_type != "1-STORY W/FINISHED ATTIC ALL AGES" & home_type != "1-1/2 STORY PUD - ALL AGES")%>%
-  filter(!Neighborhood%in%c("GrnHill", "Landmrk", "Greens"))%>%
-  filter(Kitchen.Qual!=1)
+# AmesHousing <- AmesHousing %>% 
+#   filter(home_type != "1-STORY W/FINISHED ATTIC ALL AGES" & home_type != "1-1/2 STORY PUD - ALL AGES")%>%
+#   filter(!Neighborhood%in%c("GrnHill", "Landmrk", "Greens"))%>%
+#   filter(Kitchen.Qual!=1)
 ```
