@@ -222,8 +222,9 @@ This project used data from 1500 residential property sales in Ames, Iowa betwee
 
 # Exploratory Data Analysis 
 
-Hypothesis 
+Prior to doing the exploratory data analysis, we hypothesize that the following variables will be the most predictive of home price: lot area, home type, year built, and overall quality. We think these will be the most predictive because we assume that if we were to be in the market for a home, these would be among the top criteria we would consider when deciding which home to purchase.
 
+Furthermore, we also hypothesize that a generalized additive model (GAM) will be the best model to use. We think so because the GAM will be able to combine the strengths of various different other model types including polynomials, cubic splines, and smoothing splines. 
 
 ### Exploring Selected Home Characteristics in the Dataset
 
