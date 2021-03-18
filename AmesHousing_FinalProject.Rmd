@@ -264,6 +264,10 @@ plot_grid(count_lotA, count_lotA_2)
 #https://stackoverflow.com/questions/1249548/side-by-side-plots-with-ggplot2
 ```
 
+When it comes to lot area, this dataset has many outliers as shown above. We found that there were `r outlier.no` outliers greater than the minimum outlier value of `r outlier.sum[1]`. As these made visualization difficult, we temporarily removed them.
+After removing the outliers, we can see that homes have a somewhat normal distribution in terms of lot area near the median of `r summary(AmesHousing$lot_area)[3]` square feet.
+
+
 ```{r Counts by home type, message=FALSE, warning=FALSE, echo = FALSE}
 AmesHousing <- within(AmesHousing, home_type <- factor(home_type, levels=names(sort(table(home_type), decreasing=TRUE))))
 # https://stackoverflow.com/questions/5208679/order-bars-in-ggplot2-bar-graph
@@ -286,11 +290,6 @@ ggplotly(ggplot(AmesHousing, aes(x=year_built)) +
   ggtitle("Figure 4: Count of Homes by Year Built"))
 ```
 
-
-When it comes to lot area, this dataset has many outliers as shown above. We found that there were `r outlier.no` outliers greater than the minimum outlier value of `r outlier.sum[1]`. As these made visualization difficult, we temporarily removed them.
-After removing the outliers, we can see that homes have a somewhat normal distribution in terms of lot area near the median of `r summary(AmesHousing$lot_area)[3]` square feet.
-
-
 From **Figure 3**, we see that 1-story homes that were built in 1946 or later make up the bulk of our dataset, specifically `r nrow(filter(AmesHousing, home_type=="1-STORY 1946 & NEWER ALL STYLES"))`. This is over one-third of our total dataset which has `r nrow(AmesHousing)` observations. Please not that the graphs are interactive so move your cursor over the graph to see more details.
 Furthermore, we can also observe from **Figure 4**, that most homes were built within a 5 year time range of 2005. 
 
@@ -300,6 +299,8 @@ Summary Statistics
 ```{r, echo = FALSE}
 # table(AmesHousing$Kitchen.Qual)
 summary(AmesHousing$Kitchen.Qual)
+
+
 ```
 
 
@@ -327,6 +328,8 @@ ggplotly(AmesHousing %>%
 ```
 
 
+We can observe  from **Figure 5** that there is a large variation in sale price across across different neighborhoods. Even within neighborhood we also see variation. Investigating some housing characteristics may give us insight into the variation observed in price within neighborhoods.
+
 ```{r saleprice distribution x overal q, echo=FALSE, warning=FALSE, message=FALSE, out.width="800px", out.height="600px"}
 graph6<- ggplot(AmesHousing, aes(overall_qual, saleprice)) + 
   geom_point(stat="identity", color=rgb(0.1,0.4,0.5,0.7)) +
@@ -346,7 +349,7 @@ graph7<- ggplot(AmesHousing, aes(year_built, saleprice)) +
   geom_smooth(method=lm)
 plot_grid(graph6, graph7)
 ```
-
+ We first examined overall quality (**Figure 6**) and - as expected - price increases as overall quality increases. Examining year built (**Figure 7**), we observe that the the newer a home is, the higher its price, on average.
 
 ```{r Saleprice distribution home type, message=FALSE, warning=FALSE, echo=FALSE, out.width="800px", out.height="800px"}
  ggplotly(AmesHousing %>%
@@ -361,7 +364,7 @@ plot_grid(graph6, graph7)
     scale_y_continuous(labels = dollar)+
     theme(plot.title = element_text(hjust = 0.5), axis.text.x=element_text(angle=-90, hjust=0)))
 ```
-
+ In addition investigating the relationship between sale price with location, overall quality, and age of the house, we also examined at the relationship between sale price and home type. We find that 2 story homes built in the year 1946 or later have the highest median home prices (**Figure 8**). 
 
 ```{r sale price distribution  kitchen qual, warning=FALSE, message= FALSE, echo=FALSE,out.width="800px", out.height="600px"}
 graph9<- ggplot(AmesHousing, aes(Kitchen.Qual, saleprice)) +
@@ -386,11 +389,6 @@ plot_grid(graph9, graph10)
 ```
 
 
-
-We can observe  from **Figure 5** that there is a large variation in sale price across across different neighborhoods. Even within neighborhood we also see variation. Investigating some housing characteristics may give us insight into the variation observed in price within neighborhoods. We first examined overall quality (**Figure 6**) and - as expected - price increases as overall quality increases.
-
-Examining year built (**Figure 7**), we observe that the the newer a home is, the higher its price, on average. In addition investigating the relationship between sale price with location, overall quality, and age of the house, we also examined at the relationship between sale price and home type. We find that 2 story homes built in the year 1946 or later have the highest median home prices (**Figure 8**). 
-
 **Figure 9** explores the relationship between kitchen quality and sale price.The higher the kitchen quality the higher the median sale price. This increase, however, is non-linear (but rather quadratic). From **Figure 10**, we can see that - as expected - there is a gradual positive relationship between lot area and sales price.
 
 
@@ -406,6 +404,38 @@ Examining year built (**Figure 7**), we observe that the the newer a home is, th
 **Modifying variable class:**  We decided to keep the quality variables selected as a continuous variable as opposed to switching it to a factor. We did so because changing it to a factor would have lead to us dropping the "Very Poor" or "1" factor level as this level only has around 4 observations. By keeping the variable continuous, we are able to keep these observations and so better predict the home prices of homes that fall under this category.
 
 **Model Selection:**
+
+We began our model selection by reducing the number of variables within our housing data set. We created a subset data set that included the variables we hypothesized would important predictors of sale price. 
+
+These variables include: 
+
+
+* `LotArea`: Lot size in square feet
+* `OverallQual`: Rates the overall material and finish of the house
+* `YearBuilt`: Original construction date
+* `Exterior1st`: Exterior covering on house
+* `HeatingQC`: Heating quality and condition
+* `Foundation`: Type of foundation
+* `TotRmsAbvGrd`: Total rooms above grade (does not include bathrooms)
+* `KitchenQual`: Kitchen quality
+* `BsmtQual`: Evaluates the height of the basement
+* `Neighborhood`: Physical locations within Ames city limits
+* `LandSlope`: Slope of property
+* `Street`: Type of road access to property
+* `HouseStyle`: Style of dwelling
+* `GarageQual`: Garage quality
+* `Fence`: Fence quality
+* `YrSold`: Year Sold (YYYY)
+
+
+We further included additional variables that will be utilized later in the report to create a renovation calculator.  
+
+* `FullBath`: Full bathrooms above grade
+* `RoofStyle`: Type of roof
+
+
+Using our subset, we ran 1) a subset selection, (2) forward stepwise selection and (3) a forward stepwise selection for our variable selection. The graphs below are graphs that plot the number of variables against the BIC value for our three methods of variable selection. 
+
 
 ```{r Splitting into test/train , message=FALSE, warning=FALSE, echo=FALSE}
 
@@ -447,6 +477,42 @@ testing <- AmesHousing_Short%>%
 
 ```
 
+```{r best subset selection, cache = TRUE, message=FALSE, warning=FALSE, echo=FALSE}
+#Best subset selection
+regfit.subset <- regsubsets(saleprice~.,
+                data=training,
+                nbest = 1, 
+                nvmax = 7,
+                method="exhaustive", really.big = TRUE)
+
+```
+
+
+```{r best subset BIC plot, message=FALSE, warning=FALSE, echo=FALSE}
+regfit.subset_sum<-summary(regfit.subset)
+#regfit.subset_sum
+
+#Plot of BIC for the subsets
+num_variables<-seq(1,length(regfit.subset_sum$bic))
+#Note: Generates a sequence of numbers from 1 to the length of bic in lifexp.summary
+plot_BIC<-ggplot(data = data.frame(regfit.subset_sum$bic),
+                 aes(x=num_variables,y=regfit.subset_sum$bic))+
+  geom_line()+
+  geom_point(x=which.min(regfit.subset_sum$bic),
+             y=min(regfit.subset_sum$bic),aes(color="green"),
+             show.legend = FALSE)+
+  xlab("# Variables")+
+  ylab("BIC")+
+  ggtitle("Figure 11: Subset Selection") +
+  theme_bw()
+plot_BIC
+
+# BIC selected best subset model
+#which.min(regfit.subset_sum$bic)
+```
+
+
+
 ```{r forward subset , message=FALSE, warning=FALSE, echo=FALSE}
 
 
@@ -470,11 +536,12 @@ plot_BIC<-ggplot(data = data.frame(regfit.fwd.sum$bic),
              show.legend = FALSE)+
   xlab("# Variables")+
   ylab("BIC")+
+  ggtitle("Figure 12: Forward Stepwise Selection") +
   theme_bw()
 
 plot_BIC
 # BIC selected best subset model
-which.min(regfit.fwd.sum$bic)
+#which.min(regfit.fwd.sum$bic)
 
 ```
 
@@ -502,6 +569,7 @@ plot_BIC<-ggplot(data = data.frame(regfit.bwd.sum$bic),
              show.legend = FALSE)+
   xlab("# Variables")+
   ylab("BIC")+
+    ggtitle("Figure 13: Backward Stepwise Selection") +
   theme_bw()
 
 plot_BIC
@@ -510,49 +578,24 @@ plot_BIC
 
 
 # BIC selected best subset model
-which.min(regfit.bwd.sum$bic)
+#which.min(regfit.bwd.sum$bic)
 ```
 
-```{r best subset selection, cache = TRUE}
-#Best subset selection
-regfit.subset <- regsubsets(saleprice~.,
-                data=training,
-                nbest = 1, 
-                nvmax = 7,
-                method="exhaustive", really.big = TRUE)
+Across all variable selection method, the a model with 7 variables has the lowest bIC score. Comparing the variables included in a model with seven variables across the three selection methods, we see that they all share the same variables. 
+
+```{r, message=FALSE, warning=FALSE, echo=FALSE}
+knitr::kable(names(coef(regfit.subset, 7)), caption = "Subset Selection")
+knitr::kable(names(coef(regfit.fwd, 7)), caption = "Forward stepwise Selection")
+knitr::kable(names(coef(regfit.bwd, 7)), caption = "Backward stepwise Selection")
 
 ```
 
-```{r best subset BIC plot}
-regfit.subset_sum<-summary(regfit.subset)
-#regfit.subset_sum
 
-#Plot of BIC for the subsets
-num_variables<-seq(1,length(regfit.subset_sum$bic))
-#Note: Generates a sequence of numbers from 1 to the length of bic in lifexp.summary
-plot_BIC<-ggplot(data = data.frame(regfit.subset_sum$bic),
-                 aes(x=num_variables,y=regfit.subset_sum$bic))+
-  geom_line()+
-  geom_point(x=which.min(regfit.subset_sum$bic),
-             y=min(regfit.subset_sum$bic),aes(color="green"),
-             show.legend = FALSE)+
-  xlab("# Variables")+
-  ylab("BIC")+
-  theme_bw()
-plot_BIC
 
-# BIC selected best subset model
-which.min(regfit.subset_sum$bic)
-```
+We followed our variable selection analysis with running cross validation that allowed us to produce a 10-fold CV error estimates for polynomial regression, cubic splines, and smoothing splines. 
 
-```{r}
-names(coef(regfit.fwd, 7))
-names(coef(regfit.bwd, 7))
-names(coef(regfit.subset, 7))
-```
-Chosen Variables: lot_area, tot_rms_abv_grd, overall_qual, Kitchen.Qual, year_built, NeighborhoodNorthridge, Bsmt.QualEx
 
-```{r Functions for Model Selection}
+```{r Functions for Model Selection, message=FALSE, warning=FALSE, echo=FALSE}
 # Function that trains a degree d polynomial on the training data and returns its prediction error on the test data. It is assumed that train and test are data frames, with 2 columns: first named x, the second named y. Output: The test MSE of the model
 polyTestErr <- function(dat, train, d) {
   poly.fit <- lm(y ~ poly(x, degree = d), data = dat, subset = train)
@@ -666,7 +709,7 @@ plot.smoothCV <- function(smoothcv.err, K, title.text = "", facet = FALSE,
 }
 ```
 
-```{r CV Plot Lot Area}
+```{r CV Plot Lot Area, message=FALSE, warning=FALSE, echo=FALSE}
 #Chosen Variables: lot_area, tot_rms_abv_grd, overall_qual, Kitchen.Qual, year_built, NeighborhoodNorthridge, Bsmt.QualEx
 cv.lot_area <- smoothCV(x = training$lot_area, 
                     y = training$saleprice, 
@@ -680,7 +723,7 @@ plot.smoothCV(cv.lot_area,
 
 A degree 2 smoothing spline appears to be the best model choice for lot area. It has the lowest CV error and the lowest has the most stable curve.
 
-```{r CV Plot Total Rooms Above Grade}
+```{r CV Plot Total Rooms Above Grade, message=FALSE, warning=FALSE, echo=FALSE}
 #Chosen Variables: lot_area, tot_rms_abv_grd, overall_qual, Kitchen.Qual, year_built, NeighborhoodNorthridge, Bsmt.QualEx
 cv.tot_rms_abv_grd <- smoothCV(x = training$tot_rms_abv_grd, 
                     y = training$saleprice, 
@@ -694,7 +737,7 @@ plot.smoothCV(cv.tot_rms_abv_grd,
 
 A degree 6 smoothing spline appears to be the best fit for the total rooms above grade variable. While a lower degree cubic spine is comparable, the cubic spline becomes more unstable at higher degrees.
 
-```{r CV Plot Overall Quality }
+```{r CV Plot Overall Quality , message=FALSE, warning=FALSE, echo=FALSE}
 #Chosen Variables: lot_area, tot_rms_abv_grd, overall_qual, Kitchen.Qual, year_built, NeighborhoodNorthridge, Bsmt.QualEx
 cv.overall_qual <- smoothCV(x = training$overall_qual,
                     y = training$saleprice,
@@ -708,7 +751,7 @@ plot.smoothCV(cv.overall_qual,
 
 A degree 6 smoothing spline appears to be a good fit here, however other models appear to do comparably as well. 
 
-```{r CV Plot Kitchen Quality}
+```{r CV Plot Kitchen Quality, message=FALSE, warning=FALSE, echo=FALSE}
 #Chosen Variables: lot_area, tot_rms_abv_grd, overall_qual, Kitchen.Qual, year_built, NeighborhoodNorthridge, Bsmt.QualEx
 cv.Kitchen.Qual <- smoothCV(x = training$Kitchen.Qual, 
                     y = training$saleprice, 
@@ -722,7 +765,7 @@ plot.smoothCV(cv.Kitchen.Qual,
 
 A quadratic polynomial appear to be the best fit for this model as it has the lowest error.
 
-```{r CV Plot Year Built}
+```{r CV Plot Year Built, message=FALSE, warning=FALSE, echo=FALSE,}
 #Chosen Variables: lot_area, tot_rms_abv_grd, overall_qual, Kitchen.Qual, year_built, NeighborhoodNorthridge, Bsmt.QualEx
 cv.year_built <- smoothCV(x = training$year_built, 
                     y = training$saleprice, 
@@ -736,7 +779,7 @@ plot.smoothCV(cv.year_built,
 
 A cubic spline with 8 degrees of freedom appears to be the best model in this case. Other models are close in CV error and are fairly stable, but the cubic spline model has the lowest error.
 
-```{r CV Plot Basement Quality}
+```{r CV Plot Basement Quality, message=FALSE, warning=FALSE, echo=FALSE}
 #Chosen Variables: lot_area, tot_rms_abv_grd, overall_qual, Kitchen.Qual, year_built, NeighborhoodNorthridge, Bsmt.Qual
 
 cv.Bsmt.Qual <- smoothCV(x = training$Bsmt.Qual,
@@ -753,7 +796,7 @@ plot.smoothCV(cv.Bsmt.Qual,
 
 A degree three polynomial appears to be the best option as it has the lowest CV error rate. Cubic spline has only one point so it is unclear whether it has a stable trend.
 
-```{r}
+```{r, message=FALSE, warning=FALSE, echo=FALSE}
 
 gam.fit <- gam(saleprice ~ s(lot_area, 2) + 
                  s(tot_rms_abv_grd, 6) + 
@@ -767,7 +810,7 @@ gam.fit <- gam(saleprice ~ s(lot_area, 2) +
 
 ```
 
-```{r}
+```{r, message=FALSE, warning=FALSE, echo=FALSE}
 
 # GAM Training Error
 
@@ -782,7 +825,7 @@ mean((training$saleprice - gam.preds.train)^2)
 gam.fit.sum
 
 ```
-```{r}
+```{r, message=FALSE, warning=FALSE, echo=FALSE}
 
 # GAM Test Error
 
@@ -801,7 +844,7 @@ mae.gam
 ```
 
 
-```{r}
+```{r, message=FALSE, warning=FALSE, echo=FALSE}
 
 
 lm.fit  <- lm(saleprice ~ lot_area + Neighborhood + 
@@ -822,22 +865,15 @@ mae.lm
 
 ```
 
-```{r Renovation Calculator}
+```{r Renovation Calculator, message=FALSE, warning=FALSE, echo=FALSE}
 
 ren.cal <- predict.Gam(gam.fit, testing.gam)
 
-ren.cal
-
 ```
 
-```{r}
 
-df.test <- data.frame(test)
 
-df.test
-```
-
-```{r}
+```{r, message=FALSE, warning=FALSE, echo=FALSE}
 
 tot_rms_abv_grd <- c(2)
 
@@ -865,39 +901,19 @@ price.pred1 <- predict.Gam(gam.fit, test.df)
 
 price.pred2 <- predict.Gam(gam.fit, test.df)
 
-ren.cal
 
 test.df
 
 ```
 
-```{r}
+```{r, message=FALSE, warning=FALSE, echo=FALSE}
 
 ggplotly(ggplot(AmesHousing, aes(saleprice, overall_qual)) +
   geom_point())
 
 ```
 
-```{r}
-
-ggplot(AmesHousing, aes(saleprice, overall_qual)) +
-  geom_boxplot()
-
-ggplotly(ggplot(AmesHousing, aes(overall_qual, saleprice)) +
-    scale_fill_viridis(discrete = TRUE, alpha=0.5) +
-    geom_jitter(color=rgb(0.1,0.4,0.5,0.7), size=0.4, alpha=0.5) +
-   geom_boxplot(fill = rgb(0.1,0.4,0.5,0.7))
-
-summary(AmesHousing$overall_qual)
-   
-```
-
-```{r}
-
-```
-
-
-```{r}
+```{r, message=FALSE, warning=FALSE, echo=FALSE}
 
 testing[254,]
 
@@ -913,15 +929,15 @@ test3[1,1] <- 3
 
 test3
 
-```
-
-```{r}
 
 
 
 ```
 
 
+```{r textbox, echo=FALSE}
+
+```
 
 # Analysis
 
