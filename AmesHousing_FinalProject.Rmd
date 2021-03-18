@@ -813,6 +813,9 @@ plot.smoothCV(cv.bath.abv.grd,
               title.text = "CV Error: saleprice ~ Full Bath Above Grade", 
               y.scale.factor = 30)
 ```
+The plot suggest that model that has the lowest cv error is a smoothing spline with 4 degrees of freedom
+
+# Analysis
 
 ```{r, message=FALSE, warning=FALSE, echo=FALSE}
 
@@ -827,10 +830,6 @@ gam.fit <- gam(saleprice ~ s(lot_area, 2) +
                data = training)
 
 ```
-
-
-
-
 
 
 ```{r, message=FALSE, warning=FALSE, echo=FALSE}
@@ -848,6 +847,8 @@ gam.preds.train <- predict.Gam(gam.fit, training.gam)
 #gam.fit.sum
 
 ```
+
+
 
 ```{r, message=FALSE, warning=FALSE, echo=FALSE}
 
@@ -897,28 +898,42 @@ mae.lm <- sum(abs(lm.predict-testing$saleprice ))/nrow(testing)
 | gam           | `r round(rmse.gam, 2)` | `r round(mae.gam, 2)`|
 
 
-Examining RMSE and MAE for both the linear and gam $$models^{ii}$$, we can observe that for both metrics the gam model out performs the linear model. 
+Our hypothesis on model selection was correct. Examining RMSE and MAE for both the linear and gam $$models^{ii}$$, we can observe that for both metrics the gam model out performs the linear model. 
 
-```{r}
+
+```{r Gam Summary}
 
 gam.fit.sum
 
-#or 
-#lm.fit
+```
+
+Based on the summary output for the `gam` model, all of our variables are statistically significant at least to the p=.01 which suggests that these variables are relevant predictors for saleprice. This goes in line with part of out hypothesis that `lot_area` and `overall_qual` would be a statically significant predictors of `saleprice`. Contrary to our hypothesis, `home_type` and `overall_qual` are not statically significant predictors of `saleprice`.
+
+
+```{r Gam Plots, out.width="800px", out.height="800px"}
+par(mfrow = c(4,2))
+# Write your plot() command below this comment
+plot(gam.fit, se = TRUE, col = 'darkgreen', lwd = 2)
 ```
 
 
-```{r Renovation Calculator, message=FALSE, warning=FALSE, echo=FALSE}
-
-ren.cal <- predict.Gam(gam.fit, testing.gam)
-
-```
+# Wanna interpret this?!?!???
 
 
+
+# Discussion
 
 ```{r, message=FALSE, warning=FALSE, echo=FALSE}
 
-#function to obtain the mode 
+# ren.cal <- predict.Gam(gam.fit, testing.gam)
+
+```
+
+
+
+```{r Mode Function, message=FALSE, warning=FALSE, echo=FALSE}
+
+#function to obtain the mode for each variable in gam model
 Mode <- function(x) {
   ux <- unique(x)
   ux[which.max(tabulate(match(x, ux)))]
@@ -926,9 +941,8 @@ Mode <- function(x) {
 ```
 
 
-
-```{r }
-
+```{r Most Common House}
+#These are the modes for each variable
 tot_rms_abv_grd <- Mode(training$tot_rms_abv_grd)
 
 overall_qual <- Mode(training$overall_qual)
@@ -947,24 +961,23 @@ Roof.Style <- Mode(training$Roof.Style)
 
 BsmtFin.Type.1 <- Mode(training$BsmtFin.Type.1)
 
-test.df <- data.frame(tot_rms_abv_grd, overall_qual, lot_area, year_built, Bsmt.Qual, Kitchen.Qual, Neighborhood, full_bath_abv_grd, Roof.Style, BsmtFin.Type.1)
+#Creates a data frame of the mode that we are considering to be the approximation of the "most common" house in the data set
+test.df <- data.frame(tot_rms_abv_grd, overall_qual, lot_area, year_built, Kitchen.Qual, Neighborhood, full_bath_abv_grd, Roof.Style, BsmtFin.Type.1)
 
-test.df
-
+#We run the gam on this "most common" to determine what the sale price would be
 price.comHouse <- predict.Gam(gam.fit, test.df)
-price.comHouse
 
 ```
-
+# Change the Columns
 
 ```{r Roof style}
 
 
-
+#List of all the rood types NOT including the roof type in the "most common" house
 roofstyle.list <- c("Flat", "Gambrel", "Hip", "Mansard", "Shed")
 
+#Empty list to contain the rows to contain values where each 10 values in the list represent a house with a different roof type but the same other "most common" house characters obtained through the for loop
 roof.lst <- c()
-
 for  (i in roofstyle.list){
   tot_rms_abv_grd <- Mode(training$tot_rms_abv_grd)
   overall_qual <- Mode(training$overall_qual)
@@ -975,36 +988,36 @@ for  (i in roofstyle.list){
   full_bath_abv_grd <- Mode(training$full_bath_abv_grd)
   Roof.Style <- c(i)
   BsmtFin.Type.1 <- Mode(training$BsmtFin.Type.1)
-  list.cat <-c(tot_rms_abv_grd, overall_qual, lot_area, year_built, Bsmt.Qual, Kitchen.Qual, Neighborhood, full_bath_abv_grd, Roof.Style, BsmtFin.Type.1)
+  list.cat <-c(tot_rms_abv_grd, overall_qual, lot_area, year_built, Kitchen.Qual, Neighborhood, full_bath_abv_grd, Roof.Style, BsmtFin.Type.1)
   roof.lst <- c(roof.lst, list.cat)
 
 
 }
 
-
+#Create data fram from that least where each row is a house with the "most common" house characteristic expect changing roof type
 roof.df <- data.frame()
 roof.df<-rbind(roof.df, roof.lst[1:10], roof.lst[11:20], roof.lst[21:30],roof.lst[31:40], roof.lst[41:50])
 
+#Creates a list of the prices if we change the roof type in the "most common" house
 roof.prices <- c()
-
 for (i in 1:5){
   roof.prices[i] <- predict.Gam(gam.fit, as.vector(roof.df[i,]))
 }
 
-roof.prices
-
-print(hellup)
-
+diff <- roof.prices[1] - price.comHouse
+diff
 
 
+#Interpretation: If you change your roof type from the most common roof type to any other roof type, on average, you're house value will down
 
 ```
-
+If you change your roof type from the most common roof type, on average, `r diff`
 
 
 ```{r}
-price.comHouse - pred.roof
+# price.comHouse - pred.roof
 ```
+
 ```{r}
 basement.finish.list <- c("ALQ", "BLQ", "Rec", "LwQ", "Unf", "NA")
 
@@ -1015,26 +1028,26 @@ basement.finish.list <- c("ALQ", "BLQ", "Rec", "LwQ", "Unf", "NA")
 
 ```{r, message=FALSE, warning=FALSE, echo=FALSE}
 
-ggplotly(ggplot(AmesHousing, aes(saleprice, overall_qual)) +
-  geom_point())
+# ggplotly(ggplot(AmesHousing, aes(saleprice, overall_qual)) +
+#   geom_point())
 
 ```
 
 ```{r, message=FALSE, warning=FALSE, echo=FALSE}
 
-testing[254,]
-
-price.pred1 <- predict.Gam(gam.fit, testing[254,])
-
-price.pred1
-
-price.pred2 <- predict.Gam(gam.fit, testing[254,])
-
-test3 <- testing[254,]
-
-test3[1,1] <- 3
-
-test3
+# testing[254,]
+# 
+# price.pred1 <- predict.Gam(gam.fit, testing[254,])
+# 
+# price.pred1
+# 
+# price.pred2 <- predict.Gam(gam.fit, testing[254,])
+# 
+# test3 <- testing[254,]
+# 
+# test3[1,1] <- 3
+# 
+# test3
 
 
 
@@ -1046,10 +1059,6 @@ test3
 
 ```
 
-# Analysis
-
-
-# Discussion
 
 
 # References
