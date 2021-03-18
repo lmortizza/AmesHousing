@@ -280,6 +280,7 @@ AmesHousing <- within(AmesHousing, home_type <- factor(home_type, levels=names(s
   ggtitle("Figure 3: Count of Home Type"))
 ```
 
+From **Figure 3**, we see that 1-story homes that were built in 1946 or later make up the bulk of our dataset, specifically `r nrow(filter(AmesHousing, home_type=="1-STORY 1946 & NEWER ALL STYLES"))`. This is over one-third of our total dataset which has `r nrow(AmesHousing)` observations. Please not that the graphs are interactive so move your cursor over the graph to see more details.
 
 ```{r counts by year built, echo=FALSE, warning=FALSE, message=FALSE}
 ggplotly(ggplot(AmesHousing, aes(x=year_built)) + 
@@ -290,7 +291,6 @@ ggplotly(ggplot(AmesHousing, aes(x=year_built)) +
   ggtitle("Figure 4: Count of Homes by Year Built"))
 ```
 
-From **Figure 3**, we see that 1-story homes that were built in 1946 or later make up the bulk of our dataset, specifically `r nrow(filter(AmesHousing, home_type=="1-STORY 1946 & NEWER ALL STYLES"))`. This is over one-third of our total dataset which has `r nrow(AmesHousing)` observations. Please not that the graphs are interactive so move your cursor over the graph to see more details.
 Furthermore, we can also observe from **Figure 4**, that most homes were built within a 5 year time range of 2005. 
 
 
