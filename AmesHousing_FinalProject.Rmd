@@ -941,25 +941,25 @@ Mode <- function(x) {
 ```
 
 
-```{r Most Common House}
+```{r Most Common House, message=FALSE, warning=FALSE, echo=FALSE}
 #These are the modes for each variable
-tot_rms_abv_grd <- Mode(training$tot_rms_abv_grd)
+tot_rms_abv_grd <- Mode(AmesHousing_Short$tot_rms_abv_grd)
 
-overall_qual <- Mode(training$overall_qual)
+overall_qual <- Mode(AmesHousing_Short$overall_qual)
 
-lot_area <- Mode(training$lot_area)
+lot_area <- Mode(AmesHousing_Short$lot_area)
 
-year_built <- Mode(training$year_built)
+year_built <- Mode(AmesHousing_Short$year_built)
 
-Kitchen.Qual <- Mode(training$Kitchen.Qual)
+Kitchen.Qual <- Mode(AmesHousing_Short$Kitchen.Qual)
 
-Neighborhood <- Mode(training$Neighborhood)
+Neighborhood <- Mode(AmesHousing_Short$Neighborhood)
 
-full_bath_abv_grd <- Mode(training$full_bath_abv_grd)
+full_bath_abv_grd <- Mode(AmesHousing_Short$full_bath_abv_grd)
 
-Roof.Style <- Mode(training$Roof.Style)
+Roof.Style <- Mode(AmesHousing_Short$Roof.Style)
 
-BsmtFin.Type.1 <- Mode(training$BsmtFin.Type.1)
+BsmtFin.Type.1 <- Mode(AmesHousing_Short$BsmtFin.Type.1)
 
 #Creates a data frame of the mode that we are considering to be the approximation of the "most common" house in the data set
 test.df <- data.frame(tot_rms_abv_grd, overall_qual, lot_area, year_built, Kitchen.Qual, Neighborhood, full_bath_abv_grd, Roof.Style, BsmtFin.Type.1)
@@ -970,24 +970,24 @@ price.comHouse <- predict.Gam(gam.fit, test.df)
 ```
 # Change the Columns
 
-```{r Roof style}
+```{r Roof style Calc, message=FALSE, warning=FALSE, echo=FALSE}
 
 
-#List of all the rood types NOT including the roof type in the "most common" house
+#List of all the roof types NOT including the roof type for the "most common" house
 roofstyle.list <- c("Flat", "Gambrel", "Hip", "Mansard", "Shed")
 
 #Empty list to contain the rows to contain values where each 10 values in the list represent a house with a different roof type but the same other "most common" house characters obtained through the for loop
 roof.lst <- c()
 for  (i in roofstyle.list){
-  tot_rms_abv_grd <- Mode(training$tot_rms_abv_grd)
-  overall_qual <- Mode(training$overall_qual)
-  lot_area <- Mode(training$lot_area)
-  year_built <- Mode(training$year_built)
-  Kitchen.Qual <- Mode(training$Kitchen.Qual)
-  Neighborhood <- Mode(training$Neighborhood)
-  full_bath_abv_grd <- Mode(training$full_bath_abv_grd)
+  tot_rms_abv_grd <- Mode(AmesHousing_Short$tot_rms_abv_grd)
+  overall_qual <- Mode(AmesHousing_Short$overall_qual)
+  lot_area <- Mode(AmesHousing_Short$lot_area)
+  year_built <- Mode(AmesHousing_Short$year_built)
+  Kitchen.Qual <- Mode(AmesHousing_Short$Kitchen.Qual)
+  Neighborhood <- Mode(AmesHousing_Short$Neighborhood)
+  full_bath_abv_grd <- Mode(AmesHousing_Short$full_bath_abv_grd)
   Roof.Style <- c(i)
-  BsmtFin.Type.1 <- Mode(training$BsmtFin.Type.1)
+  BsmtFin.Type.1 <- Mode(AmesHousing_Short$BsmtFin.Type.1)
   list.cat <-c(tot_rms_abv_grd, overall_qual, lot_area, year_built, Kitchen.Qual, Neighborhood, full_bath_abv_grd, Roof.Style, BsmtFin.Type.1)
   roof.lst <- c(roof.lst, list.cat)
 
@@ -1005,21 +1005,54 @@ for (i in 1:5){
 }
 
 diff <- roof.prices[1] - price.comHouse
-diff
+#diff
 
 
 #Interpretation: If you change your roof type from the most common roof type to any other roof type, on average, you're house value will down
 
 ```
-If you change your roof type from the most common roof type, on average, `r diff`
+If you change your roof type from the most common roof type to any other roof type, on average, you're house will go down $`r abs(diff)`.
 
 
-```{r}
-# price.comHouse - pred.roof
-```
 
-```{r}
+
+```{r Basement Finish Type Calc, message=FALSE, warning=FALSE, echo=FALSE}
+#List of all the basement finish types NOT including the basement finish type for the "most common" house
 basement.finish.list <- c("ALQ", "BLQ", "Rec", "LwQ", "Unf", "NA")
+
+
+#Empty list to contain the rows to contain values where each 10 values in the list represent a house with a different basement finish type but the same other "most common" house characters obtained through the for loop
+basement.lst <- c()
+for  (i in basement.finish.list){
+  tot_rms_abv_grd <- Mode(AmesHousing_Short$tot_rms_abv_grd)
+  overall_qual <- Mode(AmesHousing_Short$overall_qual)
+  lot_area <- Mode(AmesHousing_Short$lot_area)
+  year_built <- Mode(AmesHousing_Short$year_built)
+  Kitchen.Qual <- Mode(AmesHousing_Short$Kitchen.Qual)
+  Neighborhood <- Mode(AmesHousing_Short$Neighborhood)
+  full_bath_abv_grd <- Mode(AmesHousing_Short$full_bath_abv_grd)
+  Roof.Style <- Mode(AmesHousing_Short$Roof.Style)
+  BsmtFin.Type.1 <- c(i)
+  list.cat <-c(tot_rms_abv_grd, overall_qual, lot_area, year_built, Kitchen.Qual, Neighborhood, full_bath_abv_grd, Roof.Style, BsmtFin.Type.1)
+  basement.lst <- c(basement.lst, list.cat)
+
+
+}
+
+#Create data fram from that least where each row is a house with the "most common" house characteristic expect changing roof type
+roof.df <- data.frame()
+roof.df<-rbind(roof.df, roof.lst[1:10], roof.lst[11:20], roof.lst[21:30],roof.lst[31:40], roof.lst[41:50])
+
+#Creates a list of the prices if we change the roof type in the "most common" house
+roof.prices <- c()
+for (i in 1:5){
+  roof.prices[i] <- predict.Gam(gam.fit, as.vector(roof.df[i,]))
+}
+
+diff <- roof.prices[1] - price.comHouse
+
+
+#Interpretation: If you change your roof type from the most common roof type to any other roof type, on average, you're house value will down
 
 ```
 
