@@ -785,21 +785,34 @@ plot.smoothCV(cv.year_built,
 A cubic spline with 8 degrees of freedom appears to be the best model in this case. Other models are close in CV error and are fairly stable, but the cubic spline model has the lowest error.
 
 ```{r CV Plot Basement Quality, message=FALSE, warning=FALSE, echo=FALSE}
-#Chosen Variables: lot_area, tot_rms_abv_grd, overall_qual, Kitchen.Qual, year_built, NeighborhoodNorthridge, Bsmt.Qual
-
-cv.Bsmt.Qual <- smoothCV(x = training$Bsmt.Qual,
-                    y = training$saleprice,
-                    df.min = 1,
-                    df.max = 3)
-plot.smoothCV(cv.Bsmt.Qual,
-              K = 10,
-              title.text = "CV Error: saleprice ~ Bsmt.Qual",
-              y.scale.factor = 1.1)
-
+# #Chosen Variables: lot_area, tot_rms_abv_grd, overall_qual, Kitchen.Qual, year_built, NeighborhoodNorthridge, Bsmt.Qual
+# 
+# cv.Bsmt.Qual <- smoothCV(x = training$Bsmt.Qual,
+#                     y = training$saleprice,
+#                     df.min = 1,
+#                     df.max = 3)
+# plot.smoothCV(cv.Bsmt.Qual,
+#               K = 10,
+#               title.text = "CV Error: saleprice ~ Bsmt.Qual",
+#               y.scale.factor = 1.1)
+# 
 
 ```
 
 A degree three polynomial appears to be the best option as it has the lowest CV error rate. Cubic spline has only one point so it is unclear whether it has a stable trend.
+
+
+```{r CV Plot Lot Area, message=FALSE, warning=FALSE, echo=FALSE}
+#Chosen Variables: lot_area, tot_rms_abv_grd, overall_qual, Kitchen.Qual, year_built, NeighborhoodNorthridge, Bsmt.QualEx
+cv.bath.abv.grd <- smoothCV(x = training$full_bath_abv_grd, 
+                    y = training$full_bath_abv_grd, 
+                    df.min = 1, 
+                    df.max = 4)
+plot.smoothCV(cv.bath.abv.grd, 
+              K = 10, 
+              title.text = "CV Error: saleprice ~ Full Bath Above Grade", 
+              y.scale.factor = 30)
+```
 
 ```{r, message=FALSE, warning=FALSE, echo=FALSE}
 
@@ -808,7 +821,7 @@ gam.fit <- gam(saleprice ~ s(lot_area, 2) +
                  s(overall_qual, 6) +  
                  poly(Kitchen.Qual, 2) +
                  bs(year_built, 8) +
-                 poly(Bsmt.Qual, 3) +
+                 s(full_bath_abv_grd, 4) +
                  Neighborhood + full_bath_abv_grd + 
              Roof.Style + BsmtFin.Type.1,
                data = training)
@@ -835,6 +848,7 @@ gam.preds.train <- predict.Gam(gam.fit, training.gam)
 #gam.fit.sum
 
 ```
+
 ```{r, message=FALSE, warning=FALSE, echo=FALSE}
 
 # GAM Test Error
@@ -860,7 +874,7 @@ mae.gam <- sum(abs(gam.preds.test-testing$saleprice))/nrow(testing)
 
 lm.fit  <- lm(saleprice ~ lot_area + Neighborhood + 
             year_built + tot_rms_abv_grd +
-            overall_qual + Bsmt.Qual + 
+            overall_qual + 
             Kitchen.Qual + full_bath_abv_grd + 
              Roof.Style + BsmtFin.Type.1 , data = training)
 
@@ -886,6 +900,7 @@ mae.lm <- sum(abs(lm.predict-testing$saleprice ))/nrow(testing)
 Examining RMSE and MAE for both the linear and gam $$models^{ii}$$, we can observe that for both metrics the gam model out performs the linear model. 
 
 ```{r}
+
 gam.fit.sum
 
 #or 
@@ -903,36 +918,90 @@ ren.cal <- predict.Gam(gam.fit, testing.gam)
 
 ```{r, message=FALSE, warning=FALSE, echo=FALSE}
 
-tot_rms_abv_grd <- c(2)
+#function to obtain the mode 
+Mode <- function(x) {
+  ux <- unique(x)
+  ux[which.max(tabulate(match(x, ux)))]
+}
+```
 
-overall_qual <- c(6)
 
-lot_area <- c(10000)
 
-year_built <- c(2005)
+```{r }
 
-Bsmt.Qual <- c(90)
+tot_rms_abv_grd <- Mode(training$tot_rms_abv_grd)
 
-Kitchen.Qual <- c(3)
+overall_qual <- Mode(training$overall_qual)
 
-Neighborhood <- c('Somerset')
+lot_area <- Mode(training$lot_area)
 
-full_bath_abv_grd <- c(2)
+year_built <- Mode(training$year_built)
 
-Roof.Style <- c('Hip')
+Kitchen.Qual <- Mode(training$Kitchen.Qual)
 
-BsmtFin.Type.1 <- c('ALQ')
+Neighborhood <- Mode(training$Neighborhood)
+
+full_bath_abv_grd <- Mode(training$full_bath_abv_grd)
+
+Roof.Style <- Mode(training$Roof.Style)
+
+BsmtFin.Type.1 <- Mode(training$BsmtFin.Type.1)
 
 test.df <- data.frame(tot_rms_abv_grd, overall_qual, lot_area, year_built, Bsmt.Qual, Kitchen.Qual, Neighborhood, full_bath_abv_grd, Roof.Style, BsmtFin.Type.1)
 
-price.pred1 <- predict.Gam(gam.fit, test.df)
-
-price.pred2 <- predict.Gam(gam.fit, test.df)
-
-
 test.df
 
+price.comHouse <- predict.Gam(gam.fit, test.df)
+price.comHouse
+
 ```
+
+
+```{r Roof style}
+
+
+
+roofstyle.list <- c("Flat", "Gambrel", "Hip", "Mansard", "Shed")
+
+roof.lst <- c()
+
+for  (i in roofstyle.list){
+  tot_rms_abv_grd <- Mode(training$tot_rms_abv_grd)
+  overall_qual <- Mode(training$overall_qual)
+  lot_area <- Mode(training$lot_area)
+  year_built <- Mode(training$year_built)
+  Kitchen.Qual <- Mode(training$Kitchen.Qual)
+  Neighborhood <- Mode(training$Neighborhood)
+  full_bath_abv_grd <- Mode(training$full_bath_abv_grd)
+  Roof.Style <- c(i)
+  BsmtFin.Type.1 <- Mode(training$BsmtFin.Type.1)
+  list.cat <-c(tot_rms_abv_grd, overall_qual, lot_area, year_built, Bsmt.Qual, Kitchen.Qual, Neighborhood, full_bath_abv_grd, Roof.Style, BsmtFin.Type.1)
+  roof.lst <- c(roof.lst, list.cat)
+
+
+}
+
+
+roof.df <- data.frame()
+roof.df<-rbind(roof.df, roof.lst[1:10], roof.lst[11:20], roof.lst[21:30],roof.lst[31:40], roof.lst[41:50])
+
+
+
+
+```
+
+
+
+```{r}
+price.comHouse - pred.roof
+```
+```{r}
+basement.finish.list <- c("ALQ", "BLQ", "Rec", "LwQ", "Unf", "NA")
+
+```
+
+
+
 
 ```{r, message=FALSE, warning=FALSE, echo=FALSE}
 
