@@ -993,6 +993,8 @@ for (i in 1:5){
 
 roof.prices
 
+print(hellup)
+
 
 
 
