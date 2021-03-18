@@ -210,6 +210,23 @@ AmesHousing$Bsmt.Qual <- recode(AmesHousing$Bsmt.Qual,
             `NA`   = 0,
             .default = NULL)
 
+AmesHousing <- AmesHousing %>%
+  mutate(BsmtFin.Type.1 = ifelse(is.na(BsmtFin.Type.1), "No Basement", BsmtFin.Type.1))
+
+AmesHousing$BsmtFin.Type.1 <- recode(AmesHousing$BsmtFin.Type.1, 
+            `ALQ` =  "ALQ",
+            `BLQ`  =  "BLQ",
+            `GLQ`   =  "GLQ", 
+            `LwQ`   = "LwQ",
+            `Rec`   = "Rec",
+            `Unf`   = "Nnf",
+            `No Basement` = "No Basement",
+            .default = NULL)
+
+as.factor(AmesHousing$BsmtFin.Type.1)
+typeof(AmesHousing$BsmtFin.Type.1)
+table(AmesHousing$BsmtFin.Type.1)
+
 ```
 
 # Introduction 
@@ -1040,19 +1057,22 @@ for  (i in basement.finish.list){
 }
 
 #Create data fram from that least where each row is a house with the "most common" house characteristic expect changing roof type
-roof.df <- data.frame()
-roof.df<-rbind(roof.df, roof.lst[1:10], roof.lst[11:20], roof.lst[21:30],roof.lst[31:40], roof.lst[41:50])
+basement.df <- data.frame()
+basement.df<-rbind(basement.df, basement.lst[1:10], basement.lst[11:20], basement.lst[21:30],basement.lst[31:40], basement.lst[41:50])
 
 #Creates a list of the prices if we change the roof type in the "most common" house
-roof.prices <- c()
+basement.prices <- c()
 for (i in 1:5){
-  roof.prices[i] <- predict.Gam(gam.fit, as.vector(roof.df[i,]))
+  basement.prices[i] <- predict.Gam(gam.fit, as.vector(roof.df[i,]))
 }
+basement.prices
 
-diff <- roof.prices[1] - price.comHouse
+diff <- basement.prices[1] - price.comHouse
 
 
 #Interpretation: If you change your roof type from the most common roof type to any other roof type, on average, you're house value will down
+
+#Things to Change: basement.lst, basement.df, basement.prices
 
 ```
 
