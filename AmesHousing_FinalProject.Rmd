@@ -401,7 +401,11 @@ plot_grid(graph9, graph10)
 
 **Missing data:**
 
-**Modifying variable class:**  We decided to keep the quality variables selected as a continuous variable as opposed to switching it to a factor. We did so because changing it to a factor would have lead to us dropping the "Very Poor" or "1" factor level as this level only has around 4 observations. By keeping the variable continuous, we are able to keep these observations and so better predict the home prices of homes that fall under this category.
+We opted for removing any missing observations from our final data set that we used for variable selection and modeling. 
+
+**Modifying variable class:**  
+
+We decided to keep the quality variables selected as a continuous variable as opposed to switching it to a factor. We did so because changing it to a factor would have lead to us dropping the "Very Poor" or "1" factor level as this level only has around 4 observations. By keeping the variable continuous, we are able to keep these observations and so better predict the home prices of homes that fall under this category.
 
 **Model Selection:**
 
