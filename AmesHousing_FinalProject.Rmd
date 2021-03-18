@@ -330,7 +330,7 @@ ggplotly(AmesHousing %>%
 
 We can observe  from **Figure 5** that there is a large variation in sale price across across different neighborhoods. Even within neighborhood we also see variation. Investigating some housing characteristics may give us insight into the variation observed in price within neighborhoods.
 
-```{r saleprice distribution x overal q, echo=FALSE, warning=FALSE, message=FALSE, out.width="800px", out.height="600px"}
+```{r saleprice distribution x overal q, echo=FALSE, warning=FALSE, message=FALSE, out.width="805px", out.height="600px"}
 graph6<- ggplot(AmesHousing, aes(overall_qual, saleprice)) + 
   geom_point(stat="identity", color=rgb(0.1,0.4,0.5,0.7)) +
   theme(legend.position = "none") +
@@ -345,7 +345,7 @@ graph7<- ggplot(AmesHousing, aes(year_built, saleprice)) +
   xlab("Year Built") +
   ylab("Average Sale Price") +
   scale_y_continuous(labels = dollar)+
-  ggtitle("Figure 7: Average Home Price By Year Built") +
+  ggtitle("Figure 7: Avg. Home Price by Year Built") +
   geom_smooth(method=lm)
 plot_grid(graph6, graph7)
 ```
@@ -587,6 +587,7 @@ plot_BIC
 
 Across all variable selection method, the a model with 7 variables has the lowest bIC score. Comparing the variables included in a model with seven variables across the three selection methods, we see that they all share the same variables. 
 
+
 ```{r, message=FALSE, warning=FALSE, echo=FALSE}
 knitr::kable(names(coef(regfit.subset, 7)), caption = "Subset Selection")
 knitr::kable(names(coef(regfit.fwd, 7)), caption = "Forward stepwise Selection")
@@ -594,9 +595,9 @@ knitr::kable(names(coef(regfit.bwd, 7)), caption = "Backward stepwise Selection"
 
 ```
 
+Following our variable selection analysis, we proceeded to use those variables to fit a GAM model and Linear model to help us predict sale price.  
 
-
-We followed our variable selection analysis with running cross validation that allowed us to produce a 10-fold CV error estimates for polynomial regression, cubic splines, and smoothing splines. 
+We began by creating a 10-fold CV error estimates for polynomial regression, cubic splines, and smoothing splines models. The graphs below show the results of the cross validation, allowing us to determine the model and degrees of freedom that best fit the relationship between our selected numerical variables and sale price. 
 
 
 ```{r Functions for Model Selection, message=FALSE, warning=FALSE, echo=FALSE}
@@ -814,6 +815,11 @@ gam.fit <- gam(saleprice ~ s(lot_area, 2) +
 
 ```
 
+
+
+
+
+
 ```{r, message=FALSE, warning=FALSE, echo=FALSE}
 
 # GAM Training Error
@@ -824,9 +830,9 @@ training.gam <- training[,c("tot_rms_abv_grd", "overall_qual", "lot_area", "year
 
 gam.preds.train <- predict.Gam(gam.fit, training.gam)
 
-mean((training$saleprice - gam.preds.train)^2)
+#mean((training$saleprice - gam.preds.train)^2)
 
-gam.fit.sum
+#gam.fit.sum
 
 ```
 ```{r, message=FALSE, warning=FALSE, echo=FALSE}
@@ -840,15 +846,16 @@ testing.gam <- testing[,c("tot_rms_abv_grd", "overall_qual", "lot_area", "year_b
 gam.preds.test <- predict.Gam(gam.fit, testing.gam)
 
 rmse.gam <- sqrt(mean((testing$saleprice - gam.preds.test)^2))
-rmse.gam
+# rmse.gam
 
 mae.gam <- sum(abs(gam.preds.test-testing$saleprice))/nrow(testing)
-mae.gam
+# mae.gam
 
 ```
 
 
 ```{r, message=FALSE, warning=FALSE, echo=FALSE}
+#https://towardsdatascience.com/metrics-to-understand-regression-models-in-plain-english-part-1-c902b2f4156f
 
 
 lm.fit  <- lm(saleprice ~ lot_area + Neighborhood + 
@@ -860,14 +867,31 @@ lm.fit  <- lm(saleprice ~ lot_area + Neighborhood +
 lm.predict <- predict(lm.fit, newdata = testing)
 
 rmse.lm <- sqrt(mean((lm.predict- testing$saleprice  )^2))
-rmse.lm
+# rmse.lm
 
 mae.lm <- sum(abs(lm.predict-testing$saleprice ))/nrow(testing)
-mae.lm
-#https://towardsdatascience.com/metrics-to-understand-regression-models-in-plain-english-part-1-c902b2f4156f
+# mae.lm
+
+
 
 
 ```
+
+| model         | RMSE                   | MAE                  |
+| ------------- |:----------------------:| --------------------:|
+| linear        | `r round(rmse.lm, 2)`  | `r round(mae.lm, 2)` |
+| gam           | `r round(rmse.gam, 2)` | `r round(mae.gam, 2)`|
+
+
+Examining RMSE and MAE for both the linear and gam $$models^{ii}$$, we can observe that for both metrics the gam model out performs the linear model. 
+
+```{r}
+gam.fit.sum
+
+#or 
+#lm.fit
+```
+
 
 ```{r Renovation Calculator, message=FALSE, warning=FALSE, echo=FALSE}
 
@@ -950,6 +974,11 @@ test3
 
 
 # References
+
+[1] https://stackoverflow.com/questions/5208679/order-bars-in-ggplot2-bar-graph
+
+
+[2] https://towardsdatascience.com/metrics-to-understand-regression-models-in-plain-english-part-1-c902b2f4156f
 
 
 ```{r Remove Small N categories, message=FALSE, warning=FALSE, echo = FALSE}
