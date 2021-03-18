@@ -985,6 +985,14 @@ for  (i in roofstyle.list){
 roof.df <- data.frame()
 roof.df<-rbind(roof.df, roof.lst[1:10], roof.lst[11:20], roof.lst[21:30],roof.lst[31:40], roof.lst[41:50])
 
+roof.prices <- c()
+
+for (i in 1:5){
+  roof.prices[i] <- predict.Gam(gam.fit, as.vector(roof.df[i,]))
+}
+
+roof.prices
+
 
 
 
