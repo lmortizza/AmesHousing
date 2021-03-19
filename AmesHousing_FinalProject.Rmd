@@ -1016,9 +1016,6 @@ for (i in 1:5){
 diff <- roof.prices[1] - price.comHouse
 #diff
 
-
-#Interpretation: If you change your roof type from the most common roof type to any other roof type, on average, you're house value will down
-
 ```
 If you change your roof type from the most common roof type to any other roof type, on average, your house will go down $`r abs(diff)`.
 
@@ -1061,14 +1058,9 @@ for (i in 1:5){
 diff <- basement.prices[1] - price.comHouse
 
 
-
-#Interpretation: If you change your roof type from the most common roof type to any other roof type, on average, you're house value will down
-
-#Things to Change: basement.lst, basement.df, basement.prices, second loop sequence, change dataframe list partition
-
 ```
 
-If you you go from any lower quality quarters to a Good Living Quarters - which is the most common basement finish type- on average, your house value will go up by $`r abs(diff)`.
+If you you go from an unfinished basement to any type of finished basement, our model predicts that on average, your house value will go down by $`r abs(diff)`. 
 
 
 ```{r kitchen quality Type Calc, message=FALSE, warning=FALSE, echo=FALSE}
@@ -1108,14 +1100,9 @@ for (i in 1:4){
 
 diff <- kitchen.prices[1] - price.comHouse
 
-
-
-#Interpretation: If you change your roof type from the most common roof type to any other roof type, on average, you're house value will down
-
-#Things to Change: basement.lst, basement.df, basement.prices, second loop sequence, change dataframe list partition
-
 ```
 
+If you you make any upgrade to the kitchen from a kitchen with a quality 0- on average- your house value will go up by $`r abs(diff)`.
 
 
 ```{r # full bath above grade Calc, message=FALSE, warning=FALSE, echo=FALSE}
@@ -1157,13 +1144,9 @@ for (i in 1:4){
 
 diff <- bath.prices[1] - price.comHouse
 
-
-#Interpretation: If you change your roof type from the most common roof type to any other roof type, on average, you're house value will down
-
-#Things to Change: basement.lst, basement.df, basement.prices, second loop sequence, change dataframe list partition
-
 ```
 
+If you you make any number of full bathrooms above grade (when you started with zero) - on average- your house value will go up by $`r abs(diff)`.
 
 # References
 
