@@ -1,7 +1,7 @@
 ---
 title: "Ames Housing Final Project"
 date: "Last updated on `r Sys.Date()`"
-author: "Group E"
+author: "Group E: Lidia Ortiz-Zamora, Shannon Dutchie, Jay Aswani"
 output: 
   html_document:
     fig_width: 8
@@ -791,7 +791,6 @@ plot.smoothCV(cv.bath.abv.grd,
 ```
 The plot suggest that model that has the lowest cv error is a smoothing spline with 4 degrees of freedom
 
-# Analysis
 
 ```{r, message=FALSE, warning=FALSE, echo=FALSE}
 
