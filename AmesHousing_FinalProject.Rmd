@@ -1,7 +1,7 @@
 ---
 title: "Ames Housing Final Project"
 date: "Last updated on `r Sys.Date()`"
-author: "Group E: Lidia Ortiz-Zamora, Shannon Dutchie, Jay Aswani"
+author: "Group E: Lidia Ortiz-Zamora (mortizza), Shannon Dutchie (sdutchie), Jay Aswani (aaswani)"
 output: 
   html_document:
     fig_width: 8
