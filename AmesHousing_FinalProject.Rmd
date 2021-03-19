@@ -1156,26 +1156,39 @@ If you you make any number of full bathrooms above grade (when you started with 
 #Lowest Quality Kitchen
 lq.kitchen.df <- testing %>%
   filter(Kitchen.Qual==1) %>%
-  mutate(New_Saleprice=saleprice+diff.kitchen)
+  mutate(New_Saleprice=saleprice+diff.kitchen) %>%
+  select(saleprice, New_Saleprice)
 
 #No Bathrooms
 lq.bathroom.df <- testing %>%
   filter(full_bath_abv_grd==0) %>%
-  mutate(New_Saleprice=saleprice+diff.bathroom)
+  mutate(New_Saleprice=saleprice+diff.bathroom)%>%
+  select(saleprice, New_Saleprice)
 
 #Unfinished Basement
 lq.basement.df <- testing %>%
   filter(BsmtFin.Type.1=="Unf") %>%
-  mutate(New_Saleprice=saleprice+diff.basement)
+  mutate(New_Saleprice=saleprice+diff.basement)%>%
+  select(saleprice, New_Saleprice)
 
 #Roof
 lq.roof.df <- testing %>%
   filter(Roof.Style=="Gable") %>%
-  mutate(New_Saleprice=saleprice+diff.roof)
-
+  mutate(New_Saleprice=saleprice+diff.roof)%>%
+  select(saleprice, New_Saleprice)
 
 ```
 
+```{r New SalePrice After Renovation for Evaluation}
+lq.kitchen.df
+
+lq.bathroom.df
+
+head(lq.basement.df)
+
+head(lq.roof.df)
+
+```
 
 # References
 
