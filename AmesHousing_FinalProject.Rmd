@@ -180,9 +180,11 @@ AmesHousing$Bsmt.Qual <- recode(AmesHousing$Bsmt.Qual,
 
 # Introduction 
 
-The aim of this project....
+The aim of this project is to: (1) build a sales price prediction model using a training data filled set of houses from 2006-2009 within the Ames Housing data set; (2) Use this model to predict sales price for a testing data set of houses from 2010 within the Ames Housing data set; (3) Apply this model to the creation of a renovation calculator that estimates the added value to a house when certain renovations are made.
 
-This project used data from 1500 residential property sales in Ames, Iowa between 2006 and 2012. There are 82 explanatory variables in the data set, containing -  nominal, ordinal, discrete, and continuous attributes.  Continuous variables provide information about the multiple area dimensions of the house and property, such as the the size of the lot, garage among others. Discrete variables, on the other hand, quantify characteristics of the house/properties like the number of kitchens, baths, bedrooms, and parking spots. Nominal variables, generally, describe the multiple types of materials and locations, such name of the neighborhood or the type of foundations. Ordinal variables typically rate the condition and quality of multiple house characteristics  and utilities. 
+In determining the model that will be used in the creation of the renovation calculator, we’ll first determine which variables would be the best predictors of sale price and then apply that chosen subset of variables to various models. We can then compare the performance of the various models and choose the one with the best performance. The model with the best performance will help us examine how the sale price will change if a home had renovated their kitchen, bathroom, basement, or roof.
+
+This project used data from 1500 residential property sales in Ames, Iowa between 2006 and 2012. There are 82 explanatory variables in the data set, containing -  nominal, ordinal, discrete, and continuous attributes.  Continuous variables provide information about the multiple area dimensions of the house and property, such as the size of the lot, garage among others. Discrete variables, on the other hand, quantify characteristics of the house/properties like the number of kitchens, baths, bedrooms, and parking spots. Nominal variables, generally, describe the multiple types of materials and locations, such as the name of the neighborhood or the type of foundations. Ordinal variables typically rate the condition and quality of multiple house characteristics  and utilities. 
 
 
 
@@ -286,10 +288,13 @@ Furthermore, we can also observe from **Figure 4**, that most homes were built w
 
 
 
-Summary Statistics
-```{r, echo = FALSE}
-# table(AmesHousing$Kitchen.Qual)
-summary(AmesHousing$Kitchen.Qual)
+
+Exploring kitchen quality, from the table below, we can observe that the mean kitchen quality in this data is 3.51. 
+
+
+```{r, echo = FALSE, echo=FALSE, warning=FALSE, message=FALSE}
+
+as.table(summary(AmesHousing$Kitchen.Qual))
 
 
 ```
@@ -413,7 +418,7 @@ These variables include:
 * `Foundation`: Type of foundation
 * `TotRmsAbvGrd`: Total rooms above grade (does not include bathrooms)
 * `KitchenQual`: Kitchen quality
-* `BsmtQual`: Evaluates the height of the basement
+* `BsmtFinType1`: Rating of basement finished area
 * `Neighborhood`: Physical locations within Ames city limits
 * `LandSlope`: Slope of property
 * `Street`: Type of road access to property
@@ -445,7 +450,6 @@ AmesHousing_Short<-AmesHousing%>%
     Garage.Qual,
     Exterior.1st,
     Foundation,
-    Bsmt.Qual,
     Heating.QC,
     Roof.Style,
     Kitchen.Qual,
@@ -462,6 +466,9 @@ AmesHousing_Short<-AmesHousing%>%
 # Remove missing values
 AmesHousing_Short<-AmesHousing_Short[complete.cases(AmesHousing_Short), ]
 
+
+
+#splitting into training and testing data set 
 training <- AmesHousing_Short%>%
   filter(Yr.Sold != 2010)
 
@@ -485,7 +492,7 @@ regfit.subset <- regsubsets(saleprice~.,
 
 ```{r best subset BIC plot, message=FALSE, warning=FALSE, echo=FALSE}
 regfit.subset_sum<-summary(regfit.subset)
-#regfit.subset_sum
+
 
 #Plot of BIC for the subsets
 num_variables<-seq(1,length(regfit.subset_sum$bic))
@@ -502,8 +509,6 @@ plot_BIC<-ggplot(data = data.frame(regfit.subset_sum$bic),
   theme_bw()
 plot_BIC
 
-# BIC selected best subset model
-#which.min(regfit.subset_sum$bic)
 ```
 
 
@@ -809,7 +814,7 @@ gam.fit <- gam(saleprice ~ s(lot_area, 2) +
 
 gam.fit.sum <- summary(gam.fit)
 
-training.gam <- training[,c("tot_rms_abv_grd", "overall_qual", "lot_area", "year_built", "Bsmt.Qual", "Kitchen.Qual", "Neighborhood", "full_bath_abv_grd","Roof.Style", "BsmtFin.Type.1")]
+training.gam <- training[,c("tot_rms_abv_grd", "overall_qual", "lot_area", "year_built",  "Kitchen.Qual", "Neighborhood", "full_bath_abv_grd","Roof.Style", "BsmtFin.Type.1")]
 
 gam.preds.train <- predict.Gam(gam.fit, training.gam)
 
@@ -823,7 +828,7 @@ gam.preds.train <- predict.Gam(gam.fit, training.gam)
 # GAM Test Error
 
 
-testing.gam <- testing[,c("tot_rms_abv_grd", "overall_qual", "lot_area", "year_built", "Bsmt.Qual", "Kitchen.Qual", "Neighborhood", "full_bath_abv_grd","Roof.Style", "BsmtFin.Type.1")]
+testing.gam <- testing[,c("tot_rms_abv_grd", "overall_qual", "lot_area", "year_built","Kitchen.Qual", "Neighborhood", "full_bath_abv_grd","Roof.Style", "BsmtFin.Type.1")]
 
 
 gam.preds.test <- predict.Gam(gam.fit, testing.gam)
@@ -860,16 +865,20 @@ mae.lm <- sum(abs(lm.predict-testing$saleprice ))/nrow(testing)
 
 ```
 
+
+
 | model         | RMSE                   | MAE                  |
 | ------------- |:----------------------:| --------------------:|
 | linear        | `r round(rmse.lm, 2)`  | `r round(mae.lm, 2)` |
 | gam           | `r round(rmse.gam, 2)` | `r round(mae.gam, 2)`|
 
 
-Our hypothesis on model selection was correct. Examining RMSE and MAE for both the linear and gam $$models^{ii}$$, we can observe that for both metrics the gam model out performs the linear model. 
+Our hypothesis on model selection was correct. Examining RMSE and MAE for both the linear and gam models[2] we can observe that for both metrics the gam model out performs the linear model. 
 
 
-```{r Gam Summary}
+# Discussion
+
+```{r Gam Summary, message=FALSE, warning=FALSE, echo=FALSE}
 
 gam.fit.sum
 
@@ -877,18 +886,37 @@ gam.fit.sum
 
 Based on the summary output for the `gam` model, all of our variables are statistically significant at least to the p=.01 which suggests that these variables are relevant predictors for saleprice. This goes in line with part of out hypothesis that `lot_area` and `overall_qual` would be a statically significant predictors of `saleprice`. Contrary to our hypothesis, `home_type` and `overall_qual` are not statically significant predictors of `saleprice`.
 
+Though the gam model had both a lower `RMSE` and `MAE` than the linear model and also better accommodates the flexibility in predictors, it is substantially more difficult to interpret the impact of each predictor on sale price. However, we do know based on the ANOVA parametric and ANOVA nonparametric output in the summary which variables are statistically significant in the model. 
 
-```{r Gam Plots, out.width="800px", out.height="800px"}
+Below is a plot of the smooth variables.
+
+```{r Gam Plots, out.width="800px", out.height="800px", message=FALSE, warning=FALSE, echo=FALSE}
+
 par(mfrow = c(4,2))
 plot(gam.fit, se = TRUE, col = 'darkgreen', lwd = 2)
 ```
 
 
-# Wanna interpret this?!?!???
+
+## Renovation Calculator 
+
+Our goal was to create a baseline that would be the worst most common house. We calculated this approximation by taking the lowest number of full baths, the lowest kitchen quality, an unfinished basement, the mode of all the other variables in our dataset.  
+
+To determine the cost of improvements in  full baths above grade, kitchen, roof, and basement we created a base sale price for comparison. This sale price for our base comparison consists of the following characteristics: 
 
 
+* 6 rooms above grade 
+* overall quality rating of 5
+* lot area of 9,600 square feet 
+* built in 2004
+* kitchen quality rating of 1
+* 0 full baths above grade 
+* gable roof style 
+* located in North Ames 
+* unfinished basement 
 
-# Discussion
+
+Based on our renovation calculator: 
 
 
 ```{r Mode Function, message=FALSE, warning=FALSE, echo=FALSE}
@@ -928,8 +956,6 @@ test.df <- data.frame(tot_rms_abv_grd, overall_qual, lot_area, year_built, Kitch
 price.comHouse <- predict.Gam(gam.fit, test.df)
 
 ```
-
-# Change the Columns
 
 ```{r Roof style Calc, message=FALSE, warning=FALSE, echo=FALSE}
 
@@ -973,7 +999,7 @@ diff.roof <- roof.prices[1] - price.comHouse
 #diff
 
 ```
-If you change your roof type from the most common roof type to any other roof type, on average, your house will go down $`r abs(diff)`.
+* If you change your roof type from the most common roof type to any other roof type, on average, your house will go down $`r abs(diff.roof)`.
 
 
 
@@ -1014,7 +1040,7 @@ diff.basement <- basement.prices[1] - price.comHouse
 
 ```
 
-If you you go from an unfinished basement to any type of finished basement, our model predicts that on average, your house value will go down by $`r abs(diff.basement)`. 
+* If you you go from an unfinished basement to any type of finished basement, our model predicts that on average, your house value will go down by $`r abs(diff.basement)`. 
 
 
 ```{r kitchen quality Type Calc, message=FALSE, warning=FALSE, echo=FALSE}
@@ -1056,7 +1082,7 @@ diff.kitchen <- kitchen.prices[1] - price.comHouse
 
 ```
 
-If you you make any upgrade to the kitchen from a kitchen with a quality 0- on average- your house value will go up by $`r abs(diff.kitchen)`.
+* If you you make any upgrade to the kitchen from a kitchen with a quality 0- on average- your house value will go up by $`r abs(diff.kitchen)`.
 
 
 ```{r # full bath above grade Calc, message=FALSE, warning=FALSE, echo=FALSE}
@@ -1100,10 +1126,10 @@ diff.bathroom <- bath.prices[1] - price.comHouse
 
 ```
 
-If you you make any number of full bathrooms above grade (when you started with zero) - on average- your house value will go up by $`r abs(diff.bathroom)`.
+* If you you make any number of full bathrooms above grade (when you started with zero) - on average- your house value will go up by $`r abs(diff.bathroom)`.
 
 
-```{r Renovation Calculator}
+```{r Renovation Calculator, message=FALSE, warning=FALSE, echo=FALSE}
 #Pull the difference from each renovation calc variable and apply to a random house data set
 
 
@@ -1133,6 +1159,10 @@ lq.roof.df <- testing %>%
 
 ```
 
+
+We then used our estimated costs from our renovation calculator to predict a new sale price for 2010 houses. We created four subsets dataframes:  housing with the lowest kitchen quality, unfinished basement, gable roof style and 0 bathroom. 
+
+The predicted sales prices are displayed below. 
 ```{r New SalePrice After Renovation for Evaluation}
 lq.kitchen.df
 
@@ -1143,6 +1173,36 @@ head(lq.basement.df)
 head(lq.roof.df)
 
 ```
+
+
+
+**Particular Home Improvement Recommendations**
+
+1. If you have the lowest quality kitchen, you should renovate it and upgrade to any better quality kitchen
+
+2. If you have zero full bathrooms above grade, you should renovate and add at least 1 to get an increase of `diff.bathroom` on average
+
+3. If you you have Gable roof, you should not renovate and choose roof type
+
+
+
+# Limitations
+
+**Lasso:**
+We were unable to calculate the CV error associated with the lasso variable selection method. As our prior experience with lasso was limited to working with primarily quantitative variables, we were stuck when we got errors when trying to calculate the error from the qualitative variables selected by lasso. While we are confident that this is possible to do, we were simply unfamiliar with the precise syntax. However, several of the variables that lasso recommended were also recommended by our other variable selection methods such as lot area and total rooms above grade.
+
+**GAM:**
+We had trouble figuring out how to use GAM to predict the price changes caused by a specific renovation on average. For example, if a client asked us how much the price of home would change on average if we added an additional bathroom, then we were unsure how exactly to estimate this (though we understood how to do this with a normal linear regression). On the other hand, we felt that GAM could be put to better use at predicting renovation price changes when a client gave us all the specifications of a particular house and then wanted to change one part of it (we would simply put all the information into a single row and run the predict.Gam function on it).
+
+**Renovation Calculator:**
+Our renovator calculator does seem to at least pick up on the fact that improving the kitchen or going from 0 to any number of full bathrooms above grade will add to your sale price value. However, our calculator predicts that finishing an unfinished basement in any capacity will decrease the sale price on average, which is unusual. This might suggest that the gam model doesn’t predict changes in basement type very well.
+
+**Chosen Subset of Variables:**
+When attempting to determine a the variables that were the best predictors of sale price with the `fwd`, `bwd`, and `subset` methods, using a `nvmax > 7` would cause R to restart so we had could only choose the best subset up to 7 variables.
+
+**Sale Price:**
+It is important to note that the sale price is right skewed which does impact the performance of our model on data outside of Ames Housing data set. We did not implement any modifications to address the skew.
+
 
 # References
 
