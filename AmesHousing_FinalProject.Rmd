@@ -1013,7 +1013,7 @@ for (i in 1:5){
 # predict.Gam(gam.fit, as.vector(roof.df[1,]))
 
 
-diff <- roof.prices[1] - price.comHouse
+diff.roof <- roof.prices[1] - price.comHouse
 #diff
 
 ```
@@ -1055,7 +1055,7 @@ for (i in 1:5){
   basement.prices[i] <- predict.Gam(gam.fit, as.vector(basement.df[i,]))
 }
 
-diff <- basement.prices[1] - price.comHouse
+diff.basement <- basement.prices[1] - price.comHouse
 
 
 ```
@@ -1098,7 +1098,7 @@ for (i in 1:4){
   kitchen.prices[i] <- predict.Gam(gam.fit, as.vector(kitchen.df[i,]))
 }
 
-diff <- kitchen.prices[1] - price.comHouse
+diff.kitchen <- kitchen.prices[1] - price.comHouse
 
 ```
 
@@ -1142,11 +1142,40 @@ for (i in 1:4){
 }
 
 
-diff <- bath.prices[1] - price.comHouse
+diff.bathroom <- bath.prices[1] - price.comHouse
 
 ```
 
 If you you make any number of full bathrooms above grade (when you started with zero) - on average- your house value will go up by $`r abs(diff)`.
+
+
+```{r Renovation Calculator}
+#Pull the difference from each renovation calc variable and apply to a random house data set
+
+
+#Lowest Quality Kitchen
+lq.kitchen.df <- testing %>%
+  filter(Kitchen.Qual==1) %>%
+  mutate(New_Saleprice=saleprice+diff.kitchen)
+
+#No Bathrooms
+lq.bathroom.df <- testing %>%
+  filter(full_bath_abv_grd==0) %>%
+  mutate(New_Saleprice=saleprice+diff.bathroom)
+
+#Unfinished Basement
+lq.basement.df <- testing %>%
+  filter(BsmtFin.Type.1=="Unf") %>%
+  mutate(New_Saleprice=saleprice+diff.basement)
+
+#Roof
+lq.roof.df <- testing %>%
+  filter(Roof.Style=="Gable") %>%
+  mutate(New_Saleprice=saleprice+diff.roof)
+
+
+```
+
 
 # References
 
@@ -1155,10 +1184,3 @@ If you you make any number of full bathrooms above grade (when you started with 
 
 [2] https://towardsdatascience.com/metrics-to-understand-regression-models-in-plain-english-part-1-c902b2f4156f
 
-
-```{r Remove Small N categories, message=FALSE, warning=FALSE, echo = FALSE}
-# AmesHousing <- AmesHousing %>% 
-#   filter(home_type != "1-STORY W/FINISHED ATTIC ALL AGES" & home_type != "1-1/2 STORY PUD - ALL AGES")%>%
-#   filter(!Neighborhood%in%c("GrnHill", "Landmrk", "Greens"))%>%
-#   filter(Kitchen.Qual!=1)
-```
