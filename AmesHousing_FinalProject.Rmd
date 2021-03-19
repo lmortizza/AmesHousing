@@ -209,24 +209,6 @@ AmesHousing$Bsmt.Qual <- recode(AmesHousing$Bsmt.Qual,
             `Po`   = 35,
             `NA`   = 0,
             .default = NULL)
-
-AmesHousing <- AmesHousing %>%
-  mutate(BsmtFin.Type.1 = ifelse(is.na(BsmtFin.Type.1), "No Basement", BsmtFin.Type.1))
-
-AmesHousing$BsmtFin.Type.1 <- recode(AmesHousing$BsmtFin.Type.1, 
-            `ALQ` =  "ALQ",
-            `BLQ`  =  "BLQ",
-            `GLQ`   =  "GLQ", 
-            `LwQ`   = "LwQ",
-            `Rec`   = "Rec",
-            `Unf`   = "Nnf",
-            `No Basement` = "No Basement",
-            .default = NULL)
-
-as.factor(AmesHousing$BsmtFin.Type.1)
-typeof(AmesHousing$BsmtFin.Type.1)
-table(AmesHousing$BsmtFin.Type.1)
-
 ```
 
 # Introduction 
@@ -271,6 +253,8 @@ count_lotA<-ggplot(AmesHousing, aes(x=lot_area)) +
 outlier.no <- length(boxplot.stats(AmesHousing$lot_area)$out)
 outlier.sum <- summary(boxplot.stats(AmesHousing$lot_area)$out)
 lot_area.outlier.rm <- filter(AmesHousing, lot_area < 17755)
+
+
 count_lotA_2<- ggplot(lot_area.outlier.rm, aes(x=lot_area)) + 
   geom_histogram(binwidth=500, fill="darkred") +
   theme(legend.position = "none") +
@@ -366,6 +350,7 @@ graph7<- ggplot(AmesHousing, aes(year_built, saleprice)) +
   geom_smooth(method=lm)
 plot_grid(graph6, graph7)
 ```
+ 
  We first examined overall quality (**Figure 6**) and - as expected - price increases as overall quality increases. Examining year built (**Figure 7**), we observe that the the newer a home is, the higher its price, on average.
 
 ```{r Saleprice distribution home type, message=FALSE, warning=FALSE, echo=FALSE, out.width="800px", out.height="800px"}
@@ -381,7 +366,9 @@ plot_grid(graph6, graph7)
     scale_y_continuous(labels = dollar)+
     theme(plot.title = element_text(hjust = 0.5), axis.text.x=element_text(angle=-90, hjust=0)))
 ```
- In addition investigating the relationship between sale price with location, overall quality, and age of the house, we also examined at the relationship between sale price and home type. We find that 2 story homes built in the year 1946 or later have the highest median home prices (**Figure 8**). 
+ 
+ 
+In addition investigating the relationship between sale price with location, overall quality, and age of the house, we also examined at the relationship between sale price and home type. We find that 2 story homes built in the year 1946 or later have the highest median home prices (**Figure 8**). 
 
 ```{r sale price distribution  kitchen qual, warning=FALSE, message= FALSE, echo=FALSE,out.width="800px", out.height="600px"}
 graph9<- ggplot(AmesHousing, aes(Kitchen.Qual, saleprice)) +
@@ -985,9 +972,12 @@ test.df <- data.frame(tot_rms_abv_grd, overall_qual, lot_area, year_built, Kitch
 price.comHouse <- predict.Gam(gam.fit, test.df)
 
 ```
+
 # Change the Columns
 
 ```{r Roof style Calc, message=FALSE, warning=FALSE, echo=FALSE}
+
+
 
 
 #List of all the roof types NOT including the roof type for the "most common" house
@@ -1013,13 +1003,17 @@ for  (i in roofstyle.list){
 
 #Create data fram from that least where each row is a house with the "most common" house characteristic expect changing roof type
 roof.df <- data.frame()
-roof.df<-rbind(roof.df, roof.lst[1:10], roof.lst[11:20], roof.lst[21:30],roof.lst[31:40], roof.lst[41:50])
+roof.df<-rbind(roof.df, roof.lst[1:9], roof.lst[10:18], roof.lst[19:27],roof.lst[28:36], roof.lst[37:45])
 
 #Creates a list of the prices if we change the roof type in the "most common" house
 roof.prices <- c()
 for (i in 1:5){
   roof.prices[i] <- predict.Gam(gam.fit, as.vector(roof.df[i,]))
 }
+
+
+# predict.Gam(gam.fit, as.vector(roof.df[1,]))
+
 
 diff <- roof.prices[1] - price.comHouse
 #diff
@@ -1032,11 +1026,13 @@ If you change your roof type from the most common roof type to any other roof ty
 
 
 
-
 ```{r Basement Finish Type Calc, message=FALSE, warning=FALSE, echo=FALSE}
-#List of all the basement finish types NOT including the basement finish type for the "most common" house
-basement.finish.list <- c("ALQ", "BLQ", "Rec", "LwQ", "Unf", "NA")
 
+#List of all the basement finish types NOT including the basement finish type for the "most common" house
+basement.finish.list <- c("ALQ", "BLQ",  "Rec", "LwQ", "Unf")
+
+table(is.na(AmesHousing_Short$BsmtFin.Type.1))
+table(AmesHousing$BsmtFin.Type.1)
 
 #Empty list to contain the rows to contain values where each 10 values in the list represent a house with a different basement finish type but the same other "most common" house characters obtained through the for loop
 basement.lst <- c()
@@ -1058,31 +1054,31 @@ for  (i in basement.finish.list){
 
 #Create data fram from that least where each row is a house with the "most common" house characteristic expect changing roof type
 basement.df <- data.frame()
-basement.df<-rbind(basement.df, basement.lst[1:10], basement.lst[11:20], basement.lst[21:30],basement.lst[31:40], basement.lst[41:50])
+basement.df<-rbind(basement.df, basement.lst[1:9], basement.lst[10:18], basement.lst[19:27],basement.lst[28:36], basement.lst[37:45], basement.lst[46:54])
+
 
 #Creates a list of the prices if we change the roof type in the "most common" house
 basement.prices <- c()
 for (i in 1:5){
-  basement.prices[i] <- predict.Gam(gam.fit, as.vector(roof.df[i,]))
+  basement.prices[i] <- predict.Gam(gam.fit, as.vector(basement.df[i,]))
 }
 basement.prices
 
 diff <- basement.prices[1] - price.comHouse
 
 
+
 #Interpretation: If you change your roof type from the most common roof type to any other roof type, on average, you're house value will down
 
-#Things to Change: basement.lst, basement.df, basement.prices
+#Things to Change: basement.lst, basement.df, basement.prices, second loop sequence, change dataframe list partition
 
 ```
 
+If you you go from any lower quality quarters to a Good Living Quarters - which is the most common basement finish type- on average, your house value will go up by $`r abs(diff)`.
 
 
 
 ```{r, message=FALSE, warning=FALSE, echo=FALSE}
-
-# ggplotly(ggplot(AmesHousing, aes(saleprice, overall_qual)) +
-#   geom_point())
 
 ```
 
