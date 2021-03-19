@@ -874,7 +874,6 @@ mae.lm <- sum(abs(lm.predict-testing$saleprice ))/nrow(testing)
 
 Our hypothesis on model selection was correct. Examining RMSE and MAE for both the linear and gam models[2] we can observe that for both metrics the gam model out performs the linear model. 
 
-
 # Discussion
 
 ```{r Gam Summary, message=FALSE, warning=FALSE, echo=FALSE}
@@ -896,6 +895,20 @@ plot(gam.fit, se = TRUE, col = 'darkgreen', lwd = 2)
 ```
 
 
+** **
+
+```{r,message=FALSE, warning=FALSE, echo=FALSE}
+Mape_neighborhood<- testing %>% 
+  mutate(SalePriceHat = predict.Gam(gam.fit, newdata = testing))%>%
+  mutate(MAPE = (abs(SalePriceHat-saleprice))/saleprice)%>%
+  group_by(Neighborhood)%>%
+  summarize_at(c("MAPE"), mean)%>%
+  arrange(MAPE)
+
+Mape_neighborhood
+```
+
+Based on the calculating the Mean Absolute Precentage Error (MAPE), we found that our model is better at predicting some neighborhoods like Northpark Villa (0.027) and South & West Iowa State University (0.053), but worse at predicting sale price for other neighborhoods like Iowa DOT and Rail Road (0.266) and Bloomington Heights (0.193).
 
 ## Renovation Calculator 
 
